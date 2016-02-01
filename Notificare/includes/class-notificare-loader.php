@@ -6,8 +6,8 @@
  * @link       https://notifica.re
  * @since      1.0.0
  *
- * @package    Notificare
- * @subpackage Notificare/includes
+ * @package    notificare
+ * @subpackage notificare/includes
  */
 
 /**
@@ -17,8 +17,8 @@
  * the plugin, and register them with the WordPress API. Call the
  * run function to execute the list of actions and filters.
  *
- * @package    Notificare
- * @subpackage Notificare/includes
+ * @package    notificare
+ * @subpackage notificare/includes
  * @author     Joel Oliveira <joel@notifica.re>
  */
 class Notificare_Loader {

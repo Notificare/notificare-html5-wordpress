@@ -6,8 +6,8 @@
  * @link       https://notifica.re
  * @since      1.0.0
  *
- * @package    Notificare
- * @subpackage Notificare/includes
+ * @package    notificare
+ * @subpackage notificare/includes
  */
 
 /**
@@ -16,8 +16,8 @@
  * This class defines all code necessary to run during the plugin's deactivation.
  *
  * @since      1.0.0
- * @package    Notificare
- * @subpackage Notificare/includes
+ * @package    notificare
+ * @subpackage notificare/includes
  * @author     Joel Oliveira <joel@notifica.re>
  */
 class Notificare_Deactivator {

@@ -9,8 +9,8 @@
  * @link       http://example.com
  * @since      1.0.0
  *
- * @package    Notificare
- * @subpackage Notificare/includes
+ * @package    notificare
+ * @subpackage notificare/includes
  */
 
 /**
@@ -20,8 +20,8 @@
  * so that it is ready for translation.
  *
  * @since      1.0.0
- * @package    Notificare
- * @subpackage Notificare/includes
+ * @package    notificare
+ * @subpackage notificare/includes
  * @author     Joel Oliveira <joel@notifica.re>
  */
 class Notificare_i18n {

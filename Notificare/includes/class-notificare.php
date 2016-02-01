@@ -23,11 +23,16 @@
  * version of the plugin.
  *
  * @since      1.0.0
- * @package    Notificare
- * @subpackage Notificare/includes
+ * @package    notificare
+ * @subpackage notificare/includes
  * @author     Joel Oliveira <joel@notifica.re>
  */
 class Notificare {
+
+    /**
+	 * Base URL for the Dashboard
+	 */
+	const DASHBOARD = 'https://dashboard.notifica.re';
 
 	/**
 	 * The loader that's responsible for maintaining and registering all hooks that power
@@ -68,7 +73,7 @@ class Notificare {
 	 */
 	public function __construct() {
 
-		$this->plugin_name = 'notificare';
+		$this->plugin_name = 'Notificare';
 		$this->version = '1.0.0';
 
 		$this->load_dependencies();

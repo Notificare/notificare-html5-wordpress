@@ -3,11 +3,11 @@
 /**
  * The admin-specific functionality of the plugin.
  *
- * @link       http://example.com
+ * @link       https://notifica.re
  * @since      1.0.0
  *
- * @package    Notificare
- * @subpackage Notificare/admin
+ * @package    notificare
+ * @subpackage notificare/admin
  */
 
 /**
@@ -16,9 +16,9 @@
  * Defines the plugin name, version, and two examples hooks for how to
  * enqueue the admin-specific stylesheet and JavaScript.
  *
- * @package    Notificare
- * @subpackage Notificare/admin
- * @author     Your Name <email@example.com>
+ * @package    notificare
+ * @subpackage notificare/admin
+ * @author     Joel Oliveira <joel@notifica.re>
  */
 class Notificare_Admin {
 

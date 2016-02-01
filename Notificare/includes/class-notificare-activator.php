@@ -6,8 +6,8 @@
  * @link       https://notifica.re
  * @since      1.0.0
  *
- * @package    Notificare
- * @subpackage Notificare/includes
+ * @package    notificare
+ * @subpackage notificare/includes
  */
 
 /**
@@ -16,8 +16,8 @@
  * This class defines all code necessary to run during the plugin's activation.
  *
  * @since      1.0.0
- * @package    Notificare
- * @subpackage Notificare/includes
+ * @package    notificare
+ * @subpackage notificare/includes
  * @author     Joel Oliveira <joel@notifica.re>
  */
 class Notificare_Activator {
@@ -30,6 +30,11 @@ class Notificare_Activator {
 	 * @since    1.0.0
 	 */
 	public static function activate() {
+
+        add_option( 'notificare_applicationName' );
+        add_option( 'notificare_applicationHost' );
+        add_option( 'notificare_applicationKey' );
+		add_option( 'notificare_applicationSecret' );
 
 	}
 
