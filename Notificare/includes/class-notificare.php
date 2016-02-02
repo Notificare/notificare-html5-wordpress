@@ -29,6 +29,12 @@
  */
 class Notificare {
 
+
+    /**
+	 * Plugin name
+	 */
+	const PLUGIN_NAME = 'Notificare';
+
     /**
 	 * Base URL for the Dashboard
 	 */
@@ -73,13 +79,16 @@ class Notificare {
 	 */
 	public function __construct() {
 
-		$this->plugin_name = 'Notificare';
+		$this->plugin_name = self::PLUGIN_NAME;
 		$this->version = '1.0.0';
 
 		$this->load_dependencies();
 		$this->set_locale();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
+
+
+		add_action( 'admin_menu', array( $this, 'addOptionsPage') );
 
 	}
 
@@ -216,5 +225,48 @@ class Notificare {
 	public function get_version() {
 		return $this->version;
 	}
+
+
+
+	/**
+     * Add a settings menu to the admin dashboard
+     */
+    public function addOptionsPage() {
+        add_options_page( 'Notificare Plugin Options', 'Notificare', 'manage_options', $this->plugin_name, array( $this, 'renderOptionsPage') );
+    }
+
+
+    /**
+     * Render the page where we can enter settings
+     */
+    public function renderOptionsPage() {
+        if ( !current_user_can( 'manage_options' ) )  {
+            wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+        }
+        if ( isset( $_REQUEST['action'] ) && $_REQUEST['action'] == 'update' ) {
+
+            if ( isset( $_REQUEST['applicationname'] ) ) {
+                update_option( 'notificare_applicationName', $_REQUEST['applicationname'] );
+            }
+
+            if ( isset( $_REQUEST['applicationhost'] ) ) {
+                update_option( 'notificare_applicationHost', $_REQUEST['applicationhost'] );
+            }
+
+            if ( isset( $_REQUEST['applicationversion'] ) ) {
+                update_option( 'notificare_applicationVersion', $_REQUEST['applicationversion'] );
+            }
+
+            if ( isset( $_REQUEST['applicationkey'] ) ) {
+                update_option( 'notificare_applicationKey', $_REQUEST['applicationkey'] );
+            }
+
+            if ( isset( $_REQUEST['applicationsecret'] ) ) {
+                update_option( 'notificare_applicationSecret', $_REQUEST['applicationsecret'] );
+            }
+        }
+
+        require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/partials/notificare-admin-display.php';
+    }
 
 }

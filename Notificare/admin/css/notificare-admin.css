@@ -2,3 +2,25 @@
  * All of the CSS for your admin-specific functionality should be
  * included in this file.
  */
+
+.notificare-admin-settings .settings-form .form-table .field label{
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 5px;
+}
+.notificare-admin-settings .settings-form .description{
+    display: block;
+    font-size: 12px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.notificare-admin-settings .dashicons-before::before{
+    margin-right: 15px;
+    font-size: 30px !important;
+}
+
+.notificare-admin-settings .settings-form .form-table .field input{
+    width: 49em !important;
+    height: 36px;
+}

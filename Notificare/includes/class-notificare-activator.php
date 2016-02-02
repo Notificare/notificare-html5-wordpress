@@ -35,6 +35,15 @@ class Notificare_Activator {
         add_option( 'notificare_applicationHost' );
         add_option( 'notificare_applicationKey' );
 		add_option( 'notificare_applicationSecret' );
+		add_option( 'notificare_applicationVersion' );
+		add_option( 'notificare_allowSilent', '0' );
+		add_option( 'notificare_soundsDir' );
+		add_option( 'notificare_serviceWorker' );
+		add_option( 'notificare_serviceWorkerScope' );
+		add_option( 'notificare_geolocationOptionsTimeout' );
+		add_option( 'notificare_geolocationOptionsTimeout' );
+		add_option( 'notificare_geolocationOptionsEnableHighAccuracy' );
+		add_option( 'notificare_geolocationOptionsMaximumAge' );
 
 	}
 
