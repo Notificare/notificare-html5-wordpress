@@ -43,6 +43,7 @@ class Notificare_Deactivator {
         delete_option( 'notificare_geolocationOptionsTimeout' );
         delete_option( 'notificare_geolocationOptionsEnableHighAccuracy' );
         delete_option( 'notificare_geolocationOptionsMaximumAge' );
+        delete_option( 'notificare_gcmSender' );
 
 		// Remove the rewrite rule on deactivation
 		$wp_rewrite = $GLOBALS['wp_rewrite'];

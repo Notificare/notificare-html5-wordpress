@@ -43,6 +43,11 @@
                 <label for="applicationsecret"><?php _e('Application Secret',Notificare::PLUGIN_NAME) ?></label>
                 <input name="applicationsecret" type="text" id="applicationsecret"  value="<?php echo get_option('notificare_applicationSecret'); ?>" class="regular-text" />
             </div>
+            <h3>GCM</h3>
+            <div class="field">
+                <label for="applicationgcmsender"><?php _e('GCM Sender ID',Notificare::PLUGIN_NAME) ?></label>
+                <input name="applicationgcmsender" type="text" id="applicationgcmsender" value="<?php echo get_option('notificare_gcmSender'); ?>" class="regular-text" />
+            </div>
             <h3>Geolocation Options</h3>
             <div class="field">
                 <label for="applicationgeolocationtimeout"><?php _e('Timeout',Notificare::PLUGIN_NAME) ?></label>

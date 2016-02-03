@@ -86,9 +86,11 @@ class Notificare {
 		$this->set_locale();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
+		$this->createConfig();
 
 
 		add_action( 'admin_menu', array( $this, 'addOptionsPage') );
+		add_action('wp_head', array( $this, 'addRelManifest') );
 
 	}
 
@@ -264,9 +266,39 @@ class Notificare {
             if ( isset( $_REQUEST['applicationsecret'] ) ) {
                 update_option( 'notificare_applicationSecret', $_REQUEST['applicationsecret'] );
             }
+
+            if ( isset( $_REQUEST['applicationgcmsender'] ) ) {
+                update_option( 'notificare_gcmSender', $_REQUEST['applicationgcmsender'] );
+            }
         }
 
         require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/partials/notificare-admin-display.php';
     }
 
+    public function addRelManifest() {
+    	echo '<link rel="manifest" href="' . plugin_dir_url( __FILE__ ) . 'manifest.json.php?gcm_sender_id=' . get_option('notificare_gcmSender') . '" />';
+    }
+
+    public function createConfig() {
+
+        $contents = array(
+              "apiUrl" => "https://cloud.notifica.re/api",
+              "awsStorage" => "https://s3-eu-west-1.amazonaws.com/notificare-storage",
+              "appHost" => get_option('notificare_applicationHost'),
+              "appVersion" => get_option('notificare_applicationVersion'),
+              "appKey" => get_option('notificare_applicationKey'),
+              "appSecret" => get_option('notificare_applicationSecret'),
+              "allowSilent" => get_option('notificare_allowSilent'),
+              "soundsDir" => get_option('notificare_soundsDir'),
+              "serviceWorker" => get_option('notificare_serviceWorker'),
+              "serviceWorkerScope" => get_option('notificare_serviceWorkerScope'),
+              "geolocationOptions" => array(
+                  "timeout" => get_option('notificare_geolocationOptionsTimeout'),
+                  "enableHighAccuracy" => get_option('notificare_geolocationOptionsEnableHighAccuracy'),
+                  "maximumAge" => get_option('notificare_geolocationOptionsMaximumAge')
+                )
+        );
+
+        file_put_contents ( ABSPATH . 'config.json', json_encode( $contents ) );
+    }
 }
