@@ -61,18 +61,6 @@ class Notificare_Public {
 	 */
 	public function enqueue_styles() {
 
-		/**
-		 * This function is provided for demonstration purposes only.
-		 *
-		 * An instance of this class should be passed to the run() function
-		 * defined in Notificare_Loader as all of the hooks are defined
-		 * in that particular class.
-		 *
-		 * The Notificare_Loader will then create the relationship
-		 * between the defined hooks and the functions defined in this
-		 * class.
-		 */
-
 		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/notificare-public.css', array(), $this->version, 'all' );
 
 	}
@@ -84,20 +72,9 @@ class Notificare_Public {
 	 */
 	public function enqueue_scripts() {
 
-		/**
-		 * This function is provided for demonstration purposes only.
-		 *
-		 * An instance of this class should be passed to the run() function
-		 * defined in Notificare_Loader as all of the hooks are defined
-		 * in that particular class.
-		 *
-		 * The Notificare_Loader will then create the relationship
-		 * between the defined hooks and the functions defined in this
-		 * class.
-		 */
-
+		wp_enqueue_script( $this->plugin_name . 'UAParser', plugin_dir_url( __FILE__ ) . 'js/uaparser.min.js', array( 'jquery' ), $this->version, false );
+		wp_enqueue_script( $this->plugin_name . 'Push', plugin_dir_url( __FILE__ ) . 'js/notificare.jquery.min.js', array( 'jquery' ), $this->version, false );
 		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/notificare-public.js', array( 'jquery' ), $this->version, false );
-
 	}
 
 }

@@ -28,7 +28,7 @@
             </div>
             <div class="field">
                 <label for="applicationhost"><?php _e('Application Host',Notificare::PLUGIN_NAME) ?></label>
-                <input name="applicationhost" type="text" id="applicationhost" value="<?php echo (get_option('notificare_applicationHost')) ? get_option('notificare_applicationHost') : ($_SERVER['HTTPS'] == "on") ? 'https' : 'http' . '://' .$_SERVER['HTTP_HOST']; ?>" class="regular-text" />
+                <input name="applicationhost" type="text" id="applicationhost" value="<?php echo get_option('notificare_applicationHost'); ?>" class="regular-text" />
             </div>
             <div class="field">
                 <label for="applicationversion"><?php _e('Application Version',Notificare::PLUGIN_NAME) ?></label>
