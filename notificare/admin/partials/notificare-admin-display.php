@@ -34,6 +34,16 @@
                 <label for="applicationversion"><?php _e('Application Version',Notificare::PLUGIN_NAME) ?></label>
                 <input name="applicationversion" type="text" id="applicationversion" value="<?php echo get_option('notificare_applicationVersion'); ?>" class="regular-text" />
             </div>
+            <div class="field">
+                <label for="applicationallowsilent" class="checkboxes">
+                    <input name="applicationallowsilent" type="checkbox" id="applicationallowsilent" value="1" <?php if ( get_option( 'notificare_allowSilent') == '1' ) { ?> checked="checked" <?php } ?> />
+                    <?php _e('Allow Silent Push', Notificare::PLUGIN_NAME) ?>
+                </label>
+            </div>
+            <div class="field">
+                <label for="applicationsounddir"><?php _e('Sounds Directory',Notificare::PLUGIN_NAME) ?></label>
+                <input name="applicationsounddir" type="text" id="applicationsounddir" value="<?php echo get_option('notificare_soundsDir'); ?>" class="regular-text" />
+            </div>
             <h3>Keys</h3>
 			<div class="field">
                 <label for="applicationkey"><?php _e('Application Key',Notificare::PLUGIN_NAME) ?></label>
@@ -42,6 +52,15 @@
 			<div class="field">
                 <label for="applicationsecret"><?php _e('Application Secret',Notificare::PLUGIN_NAME) ?></label>
                 <input name="applicationsecret" type="text" id="applicationsecret"  value="<?php echo get_option('notificare_applicationSecret'); ?>" class="regular-text" />
+            </div>
+            <h3>Service Worker</h3>
+            <div class="field">
+                <label for="applicationserviceworker"><?php _e('Service Worker',Notificare::PLUGIN_NAME) ?></label>
+                <input name="applicationserviceworker" type="text" id="applicationserviceworker" value="<?php echo get_option('notificare_serviceWorker'); ?>" class="regular-text" />
+            </div>
+            <div class="field">
+                <label for="applicationserviceworkerscope"><?php _e('Service Worker Scope',Notificare::PLUGIN_NAME) ?></label>
+                <input name="applicationserviceworkerscope" type="text" id="applicationserviceworkerscope" value="<?php echo get_option('notificare_serviceWorkerScope'); ?>" class="regular-text" />
             </div>
             <h3>GCM</h3>
             <div class="field">
@@ -54,8 +73,10 @@
                 <input name="applicationgeolocationtimeout" type="text" id="applicationgeolocationtimeout" value="<?php echo get_option('notificare_geolocationOptionsTimeout'); ?>" class="regular-text" />
             </div>
             <div class="field">
-                <label for="applicationgeolocationaccuracy"><?php _e('Enable High Accuracy',Notificare::PLUGIN_NAME) ?></label>
-                <input name="applicationgeolocationaccuracy" type="text" id="applicationgeolocationaccuracy" value="<?php echo get_option('notificare_geolocationOptionsEnableHighAccuracy'); ?>" class="regular-text" />
+                <label for="applicationgeolocationaccuracy" class="checkboxes">
+                    <input name="applicationgeolocationaccuracy" type="checkbox" id="applicationgeolocationaccuracy" value="1" <?php if ( get_option( 'notificare_geolocationOptionsEnableHighAccuracy') == '1' ) { ?> checked="checked" <?php } ?> />
+                    <?php _e('Enable High Accuracy', Notificare::PLUGIN_NAME) ?>
+                </label>
             </div>
             <div class="field">
                 <label for="applicationgeolocationage"><?php _e('Maximum Age',Notificare::PLUGIN_NAME) ?></label>

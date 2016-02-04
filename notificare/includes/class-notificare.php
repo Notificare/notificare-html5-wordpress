@@ -270,6 +270,35 @@ class Notificare {
             if ( isset( $_REQUEST['applicationgcmsender'] ) ) {
                 update_option( 'notificare_gcmSender', $_REQUEST['applicationgcmsender'] );
             }
+
+            if ( isset( $_REQUEST['applicationallowsilent'] ) ) {
+                update_option( 'notificare_allowSilent', $_REQUEST['applicationallowsilent'] );
+            }
+
+            if ( isset( $_REQUEST['applicationsounddir'] ) ) {
+                update_option( 'notificare_soundsDir', $_REQUEST['applicationsounddir'] );
+            }
+
+            if ( isset( $_REQUEST['applicationserviceworker'] ) ) {
+                update_option( 'notificare_serviceWorker', $_REQUEST['applicationserviceworker'] );
+            }
+
+            if ( isset( $_REQUEST['applicationserviceworkerscope'] ) ) {
+                update_option( 'notificare_serviceWorkerScope', $_REQUEST['applicationserviceworkerscope'] );
+            }
+
+            if ( isset( $_REQUEST['applicationgeolocationtimeout'] ) ) {
+                update_option( 'notificare_geolocationOptionsTimeout', $_REQUEST['applicationgeolocationtimeout'] );
+            }
+
+            if ( isset( $_REQUEST['applicationgeolocationaccuracy'] ) ) {
+                update_option( 'notificare_geolocationOptionsEnableHighAccuracy', $_REQUEST['applicationgeolocationaccuracy'] );
+            }
+
+            if ( isset( $_REQUEST['applicationgeolocationage'] ) ) {
+                update_option( 'notificare_geolocationOptionsMaximumAge', $_REQUEST['applicationgeolocationage'] );
+            }
+
         }
 
         require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/partials/notificare-admin-display.php';

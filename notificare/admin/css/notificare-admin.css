@@ -20,7 +20,11 @@
     font-size: 30px !important;
 }
 
-.notificare-admin-settings .settings-form .form-table .field input{
+.notificare-admin-settings .settings-form .form-table .field input[type="text"]{
     width: 49em !important;
     height: 36px;
+}
+
+.notificare-admin-settings .settings-form .form-table .field label.checkboxes{
+    margin: 22px 0 20px 0;
 }
