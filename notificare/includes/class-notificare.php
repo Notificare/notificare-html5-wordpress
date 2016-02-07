@@ -40,6 +40,11 @@ class Notificare {
 	 */
 	const DASHBOARD = 'https://dashboard.notifica.re';
 
+    /**
+	 * Base URL for the Docs
+	 */
+	const DOCS = 'https://docs.notifica.re/sdk';
+
 	/**
 	 * The loader that's responsible for maintaining and registering all hooks that power
 	 * the plugin.

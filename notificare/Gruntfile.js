@@ -5,7 +5,15 @@ module.exports = function(grunt) {
     // Project configuration.
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
-
+        uglify: {
+            options: {
+                banner: '/*! Notificare <%= grunt.template.today("yyyy-mm-dd") %> */\n'
+            },
+            build: {
+                src: 'public/js/notificare.jquery.js',
+                dest: 'public/js/notificare.jquery.min.js',
+            }
+        },
         makepot: {
             target: {
                 options: {
@@ -40,7 +48,10 @@ module.exports = function(grunt) {
 
     });
 
+    grunt.loadNpmTasks('grunt-contrib-uglify');
+
+
     // Default task(s).
-    grunt.registerTask( 'default', [ 'makepot', 'po2mo' ] );
+    grunt.registerTask( 'default', [ 'makepot', 'po2mo', 'uglify'] );
 
 };

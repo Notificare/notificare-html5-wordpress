@@ -22,7 +22,8 @@
 	<?php settings_fields(Notificare::PLUGIN_NAME); ?>
 		<div class="form-table">
 		    <div class="description"><?php printf( __('Before continuing grab your Application Key and Application Secret from the <a href="%s">Notificare Dashboard</a>.', Notificare::PLUGIN_NAME), Notificare::DASHBOARD ); ?></div>
-		    <div class="field">
+		    <div class="description"><?php printf( __('For information about this plugin configuration, please visit our <a href="%s">Documentation</a>.', Notificare::PLUGIN_NAME), Notificare::DOCS ); ?></div>
+            <div class="field">
                 <label for="applicationname"><?php _e('Application Name',Notificare::PLUGIN_NAME) ?></label>
                 <input name="applicationname" type="text" id="applicationname" value="<?php echo get_option('notificare_applicationName'); ?>" class="regular-text" />
             </div>
