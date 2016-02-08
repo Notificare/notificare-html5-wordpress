@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Notificare 1.0.0\n"
 "Report-Msgid-Bugs-To: http://notifica.re\n"
-"POT-Creation-Date: 2016-02-01 23:25:13+00:00\n"
+"POT-Creation-Date: 2016-02-07 21:50:56+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -23,24 +23,76 @@ msgstr ""
 "\n"
 "X-Textdomain-Support: yes\n"
 
-#: admin/partials/notificare-admin-display.php:20
+#: admin/partials/notificare-admin-display.php:19
 msgid "Notificare settings"
 msgstr ""
 
-#: admin/partials/notificare-admin-display.php:26
+#: admin/partials/notificare-admin-display.php:24
+msgid ""
+"Before continuing grab your Application Key and Application Secret from the "
+"<a href=\"%s\">Notificare Dashboard</a>."
+msgstr ""
+
+#: admin/partials/notificare-admin-display.php:25
+msgid ""
+"For information about this plugin configuration, please visit our <a "
+"href=\"%s\">Documentation</a>."
+msgstr ""
+
+#: admin/partials/notificare-admin-display.php:27
+msgid "Application Name"
+msgstr ""
+
+#: admin/partials/notificare-admin-display.php:31
+msgid "Application Host"
+msgstr ""
+
+#: admin/partials/notificare-admin-display.php:35
+msgid "Application Version"
+msgstr ""
+
+#: admin/partials/notificare-admin-display.php:41
+msgid "Allow Silent Push"
+msgstr ""
+
+#: admin/partials/notificare-admin-display.php:45
+msgid "Sounds Directory"
+msgstr ""
+
+#: admin/partials/notificare-admin-display.php:50
 msgid "Application Key"
 msgstr ""
 
-#: admin/partials/notificare-admin-display.php:29
-msgid "Copy your Application Key from <a href=\"%s\">Notificare Dashboard</a>"
-msgstr ""
-
-#: admin/partials/notificare-admin-display.php:33
+#: admin/partials/notificare-admin-display.php:54
 msgid "Application Secret"
 msgstr ""
 
-#: admin/partials/notificare-admin-display.php:36
-msgid "Copy your user token from <a href=\"%s\">Notificare Dashboard</a>"
+#: admin/partials/notificare-admin-display.php:59
+msgid "Service Worker"
+msgstr ""
+
+#: admin/partials/notificare-admin-display.php:63
+msgid "Service Worker Scope"
+msgstr ""
+
+#: admin/partials/notificare-admin-display.php:68
+msgid "GCM Sender ID"
+msgstr ""
+
+#: admin/partials/notificare-admin-display.php:73
+msgid "Timeout"
+msgstr ""
+
+#: admin/partials/notificare-admin-display.php:79
+msgid "Enable High Accuracy"
+msgstr ""
+
+#: admin/partials/notificare-admin-display.php:83
+msgid "Maximum Age"
+msgstr ""
+
+#: includes/class-notificare.php:251
+msgid "You do not have sufficient permissions to access this page."
 msgstr ""
 
 #. Author of the plugin/theme
