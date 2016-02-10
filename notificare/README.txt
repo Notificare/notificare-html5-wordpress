@@ -29,7 +29,7 @@ A complete set of features that your website is missing:
 Get started today in a few simple steps:
 
 1. Signup for free with [Notificare](https://notifica.re/signup/)
-2. Upload `notificare` directory to the `/wp-content/plugins/` directory or use the zip file through the pluginn area in your WordPress installation
+2. Upload `notificare` directory to the `/wp-content/plugins/` directory or use the zip file through the plugin area in your WordPress installation
 3. Activate the plugin through the 'Plugins' menu in WordPress
 4. Configure the Notificare plugin according to our [Documentation](http://docs.notifica.re/sdk)
 5. Implement your messaging strategy in our [Dashboard](https://dashboard.notifica.re)
@@ -38,7 +38,7 @@ Get started today in a few simple steps:
 
 = Do I need to sign up to Notificare to use this plugin? =
 
-Yes. You can also try it for 30 days before considering a paid plan. You can also upgrade or cancel it at anytime.
+Yes. You can also try it for 30 days before considering a paid plan. You can upgrade or cancel it at anytime.
 
 = Do I need a Premium Support account? =
 
