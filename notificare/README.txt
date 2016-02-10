@@ -1,5 +1,5 @@
 === Notificare ===
-Contributors: (this should be a list of wordpress.org userid's)
+Contributors: jjonthemix,silentjohnny
 Donate link: https://notifica.re
 Tags: push notifications, safari push, chrome push, firefox push, websockets
 Requires at least: 3.0.1
@@ -19,70 +19,43 @@ Start today automating how you notify your visitors about changes in your websit
 A complete set of features that your website is missing:
 
 *   Send or schedule remote notifications in any modern browser
-*   User segmentation that allows you to send the right message to the right users
+*   Easily divide your users in groups with segmentation
 *   Location based messages for when your users are on the move
-*   Automation tools without any marketing effort
+*   Automation tools for all your marketing efforts
 
 
 == Installation ==
 
-Get started today in 3 simple steps:
+Get started today in a few simple steps:
 
-1. Upload `notificare` to the `/wp-content/plugins/` directory
-1. Activate the plugin through the 'Plugins' menu in WordPress
-1. Implement your custom messaging strategy in https://dashboard.notifica.re
+1. Signup for free with [Notificare](https://notifica.re/signup/)
+2. Upload `notificare` directory to the `/wp-content/plugins/` directory or use the zip file through the pluginn area in your WordPress installation
+3. Activate the plugin through the 'Plugins' menu in WordPress
+4. Configure the Notificare plugin according to our [Documentation](http://docs.notifica.re/sdk)
+5. Implement your messaging strategy in our [Dashboard](https://dashboard.notifica.re)
 
 == Frequently Asked Questions ==
 
-= A question that someone might have =
+= Do I need to sign up to Notificare to use this plugin? =
 
-An answer to that question.
+Yes. You can also try it for 30 days before considering a paid plan. You can also upgrade or cancel it at anytime.
 
-= What about foo bar? =
+= Do I need a Premium Support account? =
 
-Answer to foo bar dilemma.
+No. But it is recommended. Our Premium Support plans allow you to contact our engineering team 24/7 through our help desk at support.notifica.re.
+
+= Which browsers support your notifications? =
+
+All the major browsers out there support our Website Push functionality. In Chrome, Firefox and Safari we use the native functionality, when this is not available we will fall back to WebSockets.
+
 
 == Screenshots ==
 
-1. This screen shot description corresponds to screenshot-1.(png|jpg|jpeg|gif). Note that the screenshot is taken from
-the /assets directory or the directory that contains the stable readme.txt (tags or trunk). Screenshots in the /assets
-directory take precedence. For example, `/assets/screenshot-1.png` would win over `/tags/4.3/screenshot-1.png`
-(or jpg, jpeg, gif).
-2. This is the second screen shot
+1. Message composer
+2. Website Push notifications
+3. Automated RSS Push Notifications
 
 == Changelog ==
 
-= 1.0 =
-* A change since the previous version.
-* Another change.
-
-== Arbitrary section ==
-
-You may provide arbitrary sections, in the same format as the ones above.  This may be of use for extremely complicated
-plugins where more information needs to be conveyed that doesn't fit into the categories of "description" or
-"installation."  Arbitrary sections will be shown below the built-in sections outlined above.
-
-== A brief Markdown Example ==
-
-Ordered list:
-
-1. Some feature
-1. Another feature
-1. Something else about the plugin
-
-Unordered list:
-
-* something
-* something else
-* third thing
-
-Here's a link to [WordPress](http://wordpress.org/ "Your favorite software") and one to [Markdown's Syntax Documentation][markdown syntax].
-Titles are optional, naturally.
-
-[markdown syntax]: http://daringfireball.net/projects/markdown/syntax
-            "Markdown is what the parser uses to process much of the readme file"
-
-Markdown uses email style notation for blockquotes and I've been told:
-> Asterisks for *emphasis*. Double it up  for **strong**.
-
-`<?php code(); // goes in backticks ?>`
+= 0.9.0 =
+* Initial setup
