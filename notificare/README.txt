@@ -8,7 +8,7 @@ Stable tag: 4.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Website push notifications for Wordpress websites. Send push notifications to your website visitors even when they are not at your website.
+Website push notifications for WordPress websites. Send push notifications to your website visitors even when they are not at your website.
 
 == Description ==
 
