@@ -200,6 +200,10 @@
                                         this._getChromeNotification(data[1]);
                                         break;
                                     case 'workeractivated':
+                                        this._sendMessage({
+                                            action: "init",
+                                            options: this.options
+                                        });
                                         break;
                                     default:
                                         //console.log(msg);

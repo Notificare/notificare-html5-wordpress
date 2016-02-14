@@ -6,9 +6,7 @@
  *  copyright 2015 Notificare
  */
 
-importScripts('../../includes/config.js.php');
-
-var theConfig = PLUGIN_OPTIONS;
+var theConfig = null;
 var theApplication = null;
 
 self.addEventListener('push', function (event) {
@@ -132,7 +130,7 @@ self.addEventListener("message", function(e) {
 
     switch(e.data.action) {
         case 'init':
-
+            theConfig = e.data.options;
             break;
         case 'update':
             //

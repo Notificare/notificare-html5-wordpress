@@ -57,6 +57,9 @@ All the major browsers out there support our Website Push functionality. In Chro
 
 == Changelog ==
 
+= 0.9.2 =
+* Changed config options in worker to come from the client whenever the worker gets active
+
 = 0.9.1 =
 * Renamed package
 * Changes in push-worker, config and manifest to reflect plugin submission direction
