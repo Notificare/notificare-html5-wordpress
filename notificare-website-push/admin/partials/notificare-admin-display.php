@@ -19,8 +19,8 @@
 	<form method="post" class="settings-form">
 	<?php settings_fields(Notificare::PLUGIN_NAME); ?>
 		<div class="form-table">
-		    <div class="description"><?php printf( __( 'Before continuing grab your Application Key and Application Secret from the <a href="%s">Notificare Dashboard</a>.', Notificare::PLUGIN_NAME ), Notificare::DASHBOARD ); ?></div>
-		    <div class="description"><?php printf( __( 'For information about this plugin configuration, please visit our <a href="%s">Documentation</a>.', Notificare::PLUGIN_NAME ), Notificare::DOCS ); ?></div>
+		    <div class="description"><?php printf( __( 'Before continuing grab your Application Key and Application Secret from', Notificare::PLUGIN_NAME ) ); ?> <a href="https://dashboard.notifica.re">dashboard.notifica.re</a></div>
+		    <div class="description"><?php printf( __( 'For information about this plugin configuration, please visit', Notificare::PLUGIN_NAME ) ); ?> <a href="http://docs.notifica.re">docs.notifica.re</a></div>
             <div class="field">
                 <label for="applicationname"><?php _e( 'Application Name', Notificare::PLUGIN_NAME ) ?></label>
                 <input name="applicationname" type="text" id="applicationname" value="<?php echo esc_html( get_option( 'notificare_applicationName' ) ); ?>" class="regular-text" />
@@ -43,7 +43,7 @@
                 <label for="applicationsounddir"><?php _e( 'Sounds Directory', Notificare::PLUGIN_NAME ) ?></label>
                 <input name="applicationsounddir" type="text" id="applicationsounddir" value="<?php echo esc_html( get_option( 'notificare_soundsDir' ) ); ?>" class="regular-text" />
             </div>
-            <h3>Keys</h3>
+            <h3><?php _e( 'Application Keys', Notificare::PLUGIN_NAME ) ?></h3>
 			<div class="field">
                 <label for="applicationkey"><?php _e( 'Application Key', Notificare::PLUGIN_NAME ) ?></label>
                 <input name="applicationkey" type="text" id="applicationkey" value="<?php echo esc_html( get_option( 'notificare_applicationKey' ) ); ?>" class="regular-text" />
@@ -52,21 +52,21 @@
                 <label for="applicationsecret"><?php _e( 'Application Secret', Notificare::PLUGIN_NAME ) ?></label>
                 <input name="applicationsecret" type="text" id="applicationsecret"  value="<?php echo esc_html( get_option( 'notificare_applicationSecret' ) ); ?>" class="regular-text" />
             </div>
-            <h3>Service Worker</h3>
+            <h3><?php _e( 'Service Worker', Notificare::PLUGIN_NAME ) ?></h3>
             <div class="field">
-                <label for="applicationserviceworker"><?php _e( 'Service Worker', Notificare::PLUGIN_NAME ) ?></label>
+                <label for="applicationserviceworker"><?php _e( 'Service Worker File', Notificare::PLUGIN_NAME ) ?></label>
                 <input name="applicationserviceworker" type="text" id="applicationserviceworker" value="<?php echo esc_html( get_option( 'notificare_serviceWorker' ) ); ?>" class="regular-text" />
             </div>
             <div class="field">
                 <label for="applicationserviceworkerscope"><?php _e( 'Service Worker Scope', Notificare::PLUGIN_NAME ) ?></label>
                 <input name="applicationserviceworkerscope" type="text" id="applicationserviceworkerscope" value="<?php echo esc_html( get_option( 'notificare_serviceWorkerScope' ) ); ?>" class="regular-text" />
             </div>
-            <h3>GCM</h3>
+            <h3><?php _e( 'GCM', Notificare::PLUGIN_NAME ) ?></h3>
             <div class="field">
                 <label for="applicationgcmsender"><?php _e( 'GCM Sender ID', Notificare::PLUGIN_NAME ) ?></label>
                 <input name="applicationgcmsender" type="text" id="applicationgcmsender" value="<?php echo esc_html( get_option( 'notificare_gcmSender' ) ); ?>" class="regular-text" />
             </div>
-            <h3>Geolocation Options</h3>
+            <h3><?php _e( 'Geolocation Options', Notificare::PLUGIN_NAME ) ?></h3>
             <div class="field">
                 <label for="applicationgeolocationtimeout"><?php _e( 'Timeout', Notificare::PLUGIN_NAME ) ?></label>
                 <input name="applicationgeolocationtimeout" type="text" id="applicationgeolocationtimeout" value="<?php echo esc_html( get_option( 'notificare_geolocationOptionsTimeout' ) ); ?>" class="regular-text" />

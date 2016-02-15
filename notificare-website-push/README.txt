@@ -8,11 +8,11 @@ Stable tag: 4.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Website push notifications for WordPress websites. Send push notifications to your website visitors even when they are not at your website.
+Smart push notifications for WordPress websites.
 
 == Description ==
 
-Website push notifications for Wordpress websites. Send push notifications to your website visitors even when they are not at your website.
+Website push notifications for WordPress websites. Send push notifications to your website visitors even when they are not at your website.
 
 Start today automating how you notify your visitors about changes in your website, new blog posts or articles.
 
@@ -46,7 +46,7 @@ No. But it is recommended. Our Premium Support plans allow you to contact our en
 
 = Which browsers support your notifications? =
 
-All the major browsers out there support our Website Push functionality. In Chrome, Firefox and Safari we use the native functionality, when this is not available we will fall back to WebSockets.
+All the major browsers out there support our Website Push functionality. In Chrome, Firefox and Safari we use native notifications functionality, when this is not available we will fall back to WebSockets.
 
 
 == Screenshots ==
@@ -55,7 +55,15 @@ All the major browsers out there support our Website Push functionality. In Chro
 2. Website Push notifications
 3. Automated RSS Push Notifications
 
+== Upgrade Notice ==
+= 1.0.0 =
+It's official! You can now send remote notifications to your website visitors.
+
+
 == Changelog ==
+
+= 1.0.0 =
+* Initial plugin submission
 
 = 0.9.3 =
 * Added validation, sanitation and escaping of values stores in the admin area

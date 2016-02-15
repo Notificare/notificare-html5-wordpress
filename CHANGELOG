@@ -1,3 +1,6 @@
+1.0.0 - 16-02-2016 Joel Oliveira
+- Initial plugin submission
+
 0.9.3 - 15-02-2016 Joel Oliveira
 - Added validation, sanitation and escaping of values stores in the admin area
 

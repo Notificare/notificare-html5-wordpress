@@ -1,0 +1,144 @@
+# Copyright (C) 2016 Notificare
+# This file is distributed under the GPL-2.0+.
+msgid ""
+msgstr ""
+"Project-Id-Version: Notificare 1.0.0\n"
+"Report-Msgid-Bugs-To: http://notifica.re\n"
+"POT-Creation-Date: 2016-02-15 21:37:39+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2016-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Joel Oliveira <joel@notifica.re>\n"
+"Language-Team: Joel Oliveira <joel@notifica.re>\n"
+"X-Generator: grunt-wp-i18n 0.4.9\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Poedit-Basepath: .\n"
+"X-Poedit-Language: Dutch\n"
+"X-Poedit-Country: NETHERLANDS\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-KeywordsList: "
+"__;_e;_x;esc_html_e;esc_html__;esc_attr_e;esc_attr__;_ex:1,2c;_nx:4c,1,2;_"
+"nx_noop:4c,1,2;_x:1,2c;_n:1,2;_n_noop:1,2;__ngettext_noop:1,2;_c,_nc:4c,1,2;"
+"\n"
+"X-Textdomain-Support: yes\n"
+
+#: admin/partials/notificare-admin-display.php:17
+msgid "Notificare settings"
+msgstr "Notificare instellingen"
+
+#: admin/partials/notificare-admin-display.php:22
+msgid "Before continuing grab your Application Key and Application Secret from"
+msgstr "Voordat je verder gaat, zoek je toepassingssleutel en toepassingsgeheim op in"
+
+#: admin/partials/notificare-admin-display.php:23
+msgid "For information about this plugin configuration, please visit"
+msgstr "Voor meer informatie over de instellingen van deze plugin, ga naar"
+
+#: admin/partials/notificare-admin-display.php:25
+msgid "Application Name"
+msgstr "De naam van je toepassing"
+
+#: admin/partials/notificare-admin-display.php:29
+msgid "Application Host"
+msgstr "Toepassing host"
+
+#: admin/partials/notificare-admin-display.php:33
+msgid "Application Version"
+msgstr "Toepassing versie"
+
+#: admin/partials/notificare-admin-display.php:39
+msgid "Allow Silent Push"
+msgstr "Sta stille push toe"
+
+#: admin/partials/notificare-admin-display.php:43
+msgid "Sounds Directory"
+msgstr "Geluiden Map"
+
+#: admin/partials/notificare-admin-display.php:46
+msgid "Application Keys"
+msgstr "Toepassingssleutels"
+
+#: admin/partials/notificare-admin-display.php:48
+msgid "Application Key"
+msgstr "Toepassingssleutel"
+
+#: admin/partials/notificare-admin-display.php:52
+msgid "Application Secret"
+msgstr "Toepassingsgeheim"
+
+#: admin/partials/notificare-admin-display.php:55
+msgid "Service Worker"
+msgstr "Service medewerker"
+
+#: admin/partials/notificare-admin-display.php:57
+msgid "Service Worker File"
+msgstr "Service medewerker bestand"
+
+#: admin/partials/notificare-admin-display.php:61
+msgid "Service Worker Scope"
+msgstr "Service medewerker reikwijdte"
+
+#: admin/partials/notificare-admin-display.php:64
+msgid "GCM"
+msgstr "GCM"
+
+#: admin/partials/notificare-admin-display.php:66
+msgid "GCM Sender ID"
+msgstr "GCM Sender ID"
+
+#: admin/partials/notificare-admin-display.php:69
+msgid "Geolocation Options"
+msgstr "Geolocatie opties"
+
+#: admin/partials/notificare-admin-display.php:71
+msgid "Timeout"
+msgstr "Timeout"
+
+#: admin/partials/notificare-admin-display.php:77
+msgid "Enable High Accuracy"
+msgstr "Schakel hoge accuraatheid in"
+
+#: admin/partials/notificare-admin-display.php:81
+msgid "Maximum Age"
+msgstr "Maximaal toegestane leeftijd"
+
+#: includes/class-notificare.php:252
+msgid "You do not have sufficient permissions to access this page."
+msgstr "Je hebt niet voldoende rechten om deze pagina te bezoeken"
+
+#: includes/class-notificare.php:266
+msgid "Application Name is required"
+msgstr "Toepassingsnaam is vereist"
+
+#: includes/class-notificare.php:279
+msgid "Application Host is required"
+msgstr "Toepassings host is vereist"
+
+#: includes/class-notificare.php:292
+msgid "Application Version is required"
+msgstr "Versienummer van je toepassing is vereist"
+
+#: includes/class-notificare.php:305
+msgid "Application Key is required"
+msgstr "Toepassingssleutel is vereist"
+
+#: includes/class-notificare.php:318
+msgid "Application Secret is required"
+msgstr "Toepassingsgeheim is vereist"
+
+#: includes/class-notificare.php:362
+msgid "Settings saved successfully"
+msgstr "Je instellingen zijn succesvol opgeslagen"
+
+#. Author of the plugin/theme
+msgid "Notificare"
+msgstr "Notificare"
+
+#. Author URI of the plugin/theme
+msgid "https://notifica.re"
+msgstr "https://notifica.re"
+
+#. Description of the plugin/theme
+msgid "Smart push notifications for WordPress websites."
+msgstr "Slimme push notificaties voor Wordpress websites"

@@ -14,8 +14,8 @@
  *
  * @wordpress-plugin
  * Plugin Name:       Notificare
- * Plugin URI:        https://notifica.re/html5-wordpress/
- * Description:       Website push notifications for Wordpress websites. Send push notifications to your website visitors even when they are not at your website.
+ * Plugin URI:        https://notifica.re
+ * Description:       Smart push notifications for WordPress websites.
  * Version:           1.0.0
  * Author:            Notificare
  * Author URI:        https://notifica.re
