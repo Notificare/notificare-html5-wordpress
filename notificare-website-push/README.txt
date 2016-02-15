@@ -57,6 +57,9 @@ All the major browsers out there support our Website Push functionality. In Chro
 
 == Changelog ==
 
+= 0.9.3 =
+* Added validation, sanitation and escaping of values stores in the admin area
+
 = 0.9.2 =
 * Changed config options in worker to come from the client whenever the worker gets active
 

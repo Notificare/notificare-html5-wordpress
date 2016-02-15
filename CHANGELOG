@@ -1,5 +1,15 @@
-1.0.0 - 08-02-2016 Joel Oliveira
-- Releasable version
+0.9.3 - 15-02-2016 Joel Oliveira
+- Added validation, sanitation and escaping of values stores in the admin area
+
+0.9.2 - 14-02-2016 Joel Oliveira
+- Changed config options in worker to come from the client whenever the worker gets active
+
+0.9.1 - 10-02-2016 Joel Oliveira
+- Renamed package
+- Changes in push-worker, config and manifest to reflect plugin submission direction
+
+0.9.0 - 08-02-2016 Joel Oliveira
+- Initial setup
 
 0.7.0 - 07-02-2016 Joel Oliveira
 - Added grunt uglify and latest library

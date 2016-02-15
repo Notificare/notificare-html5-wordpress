@@ -253,56 +253,115 @@ class Notificare {
         }
         if ( isset( $_REQUEST['action'] ) && $_REQUEST['action'] == 'update' ) {
 
-            if ( isset( $_REQUEST['applicationname'] ) ) {
-                update_option( 'notificare_applicationName', $_REQUEST['applicationname'] );
+            $errorCount = 0;
+
+            if ( isset( $_REQUEST['applicationname'] ) && !empty( $_REQUEST['applicationname'] ) ) {
+                $appName = sanitize_text_field( $_REQUEST['applicationname'] );
+                update_option( 'notificare_applicationName', $appName );
+            } else {
+                $errorCount++;
+                add_settings_error(
+                    'applicationNameError',
+                    esc_attr( 'placeholder' ),
+                    __( 'Application Name is required', Notificare::PLUGIN_NAME ),
+                    'error'
+                );
             }
 
-            if ( isset( $_REQUEST['applicationhost'] ) ) {
-                update_option( 'notificare_applicationHost', $_REQUEST['applicationhost'] );
+            if ( isset( $_REQUEST['applicationhost'] ) && !empty( $_REQUEST['applicationhost'] ) ) {
+                $appHost = sanitize_text_field( $_REQUEST['applicationhost'] );
+                update_option( 'notificare_applicationHost', $appHost );
+            } else {
+                $errorCount++;
+                add_settings_error(
+                    'applicationHostError',
+                    esc_attr( 'placeholder' ),
+                    __( 'Application Host is required', Notificare::PLUGIN_NAME ),
+                    'error'
+                );
             }
 
-            if ( isset( $_REQUEST['applicationversion'] ) ) {
-                update_option( 'notificare_applicationVersion', $_REQUEST['applicationversion'] );
+            if ( isset( $_REQUEST['applicationversion'] ) && !empty( $_REQUEST['applicationversion'] ) ) {
+                $appVersion = sanitize_text_field( $_REQUEST['applicationversion'] );
+                update_option( 'notificare_applicationVersion', $appVersion );
+            } else {
+                $errorCount++;
+                add_settings_error(
+                    'applicationVersionError',
+                    esc_attr( 'placeholder' ),
+                    __( 'Application Version is required', Notificare::PLUGIN_NAME ),
+                    'error'
+                );
             }
 
-            if ( isset( $_REQUEST['applicationkey'] ) ) {
-                update_option( 'notificare_applicationKey', $_REQUEST['applicationkey'] );
+            if ( isset( $_REQUEST['applicationkey'] ) && !empty( $_REQUEST['applicationkey'] ) ) {
+                $appKey = sanitize_text_field( $_REQUEST['applicationkey'] );
+                update_option( 'notificare_applicationKey', $appKey );
+            } else {
+                $errorCount++;
+                add_settings_error(
+                    'applicationKeyError',
+                    esc_attr( 'placeholder' ),
+                    __( 'Application Key is required', Notificare::PLUGIN_NAME ),
+                    'error'
+                );
             }
 
-            if ( isset( $_REQUEST['applicationsecret'] ) ) {
-                update_option( 'notificare_applicationSecret', $_REQUEST['applicationsecret'] );
+            if ( isset( $_REQUEST['applicationsecret'] ) && !empty( $_REQUEST['applicationsecret'] )  ) {
+                $appSecret = sanitize_text_field( $_REQUEST['applicationsecret'] );
+                update_option( 'notificare_applicationSecret', $appSecret );
+            } else {
+                $errorCount++;
+                add_settings_error(
+                    'applicationSecretError',
+                    esc_attr( 'placeholder' ),
+                    __( 'Application Secret is required', Notificare::PLUGIN_NAME ),
+                    'error'
+                );
             }
 
-            if ( isset( $_REQUEST['applicationgcmsender'] ) ) {
+            if ( isset( $_REQUEST['applicationgcmsender'] ) && is_numeric( $_REQUEST['applicationgcmsender'] ) ) {
                 update_option( 'notificare_gcmSender', $_REQUEST['applicationgcmsender'] );
             }
 
-            if ( isset( $_REQUEST['applicationallowsilent'] ) ) {
+            if ( isset( $_REQUEST['applicationallowsilent'] ) && is_numeric( $_REQUEST['applicationallowsilent'] ) ) {
                 update_option( 'notificare_allowSilent', $_REQUEST['applicationallowsilent'] );
             }
 
             if ( isset( $_REQUEST['applicationsounddir'] ) ) {
-                update_option( 'notificare_soundsDir', $_REQUEST['applicationsounddir'] );
+                $soundsDir = sanitize_text_field( $_REQUEST['applicationversion'] );
+                update_option( 'notificare_soundsDir', $soundsDir );
             }
 
             if ( isset( $_REQUEST['applicationserviceworker'] ) ) {
-                update_option( 'notificare_serviceWorker', $_REQUEST['applicationserviceworker'] );
+                $serviceWorker = sanitize_text_field( $_REQUEST['applicationserviceworker'] );
+                update_option( 'notificare_serviceWorker', $serviceWorker );
             }
 
             if ( isset( $_REQUEST['applicationserviceworkerscope'] ) ) {
-                update_option( 'notificare_serviceWorkerScope', $_REQUEST['applicationserviceworkerscope'] );
+                $serviceWorkerScope = sanitize_text_field( $_REQUEST['applicationserviceworkerscope'] );
+                update_option( 'notificare_serviceWorkerScope', $serviceWorkerScope );
             }
 
-            if ( isset( $_REQUEST['applicationgeolocationtimeout'] ) ) {
+            if ( isset( $_REQUEST['applicationgeolocationtimeout'] ) && is_numeric( $_REQUEST['applicationgeolocationtimeout'] ) ) {
                 update_option( 'notificare_geolocationOptionsTimeout', $_REQUEST['applicationgeolocationtimeout'] );
             }
 
-            if ( isset( $_REQUEST['applicationgeolocationaccuracy'] ) ) {
+            if ( isset( $_REQUEST['applicationgeolocationaccuracy'] ) && is_numeric( $_REQUEST['applicationgeolocationaccuracy'] ) ) {
                 update_option( 'notificare_geolocationOptionsEnableHighAccuracy', $_REQUEST['applicationgeolocationaccuracy'] );
             }
 
-            if ( isset( $_REQUEST['applicationgeolocationage'] ) ) {
+            if ( isset( $_REQUEST['applicationgeolocationage'] ) && is_numeric( $_REQUEST['applicationgeolocationage'] ) ) {
                 update_option( 'notificare_geolocationOptionsMaximumAge', $_REQUEST['applicationgeolocationage'] );
+            }
+
+            if ($errorCount == 0) {
+                add_settings_error(
+                    'applicationSettingsNotice',
+                    esc_attr( 'placeholder' ),
+                    __( 'Settings saved successfully', Notificare::PLUGIN_NAME ),
+                    'updated'
+                );
             }
 
         }
@@ -317,5 +376,6 @@ class Notificare {
     public function addConfig() {
         echo '<script type="text/javascript" src="' . plugin_dir_url( __FILE__ ) . 'config.js.php?app=' . get_option('notificare_applicationName') .'&appHost=' . get_option('notificare_applicationHost') .'&appVersion=' . get_option('notificare_applicationVersion') .'&appKey=' . get_option('notificare_applicationKey') .'&appSecret=' . get_option('notificare_applicationSecret') .'&allowSilent=' . get_option('notificare_allowSilent') .'&soundsDir=' . get_option('notificare_soundsDir') .'&serviceWorker=' . get_option('notificare_serviceWorker') .'&serviceWorkerScope=' . get_option('notificare_serviceWorkerScope') .'&timeout=' . get_option('notificare_geolocationOptionsTimeout') .'&enableHighAccuracy=' . get_option('notificare_geolocationOptionsEnableHighAccuracy') .'&maximumAge=' . get_option('notificare_geolocationOptionsMaximumAge') .'"></script>';
     }
+
 
 }
