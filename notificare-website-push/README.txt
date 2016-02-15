@@ -3,8 +3,8 @@ Contributors: jjonthemix,silentjohnny
 Donate link: https://notifica.re
 Tags: push notifications, safari push, chrome push, firefox push, websockets
 Requires at least: 3.0.1
-Tested up to: 3.4
-Stable tag: 4.3
+Tested up to: 4.4
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -56,11 +56,16 @@ All the major browsers out there support our Website Push functionality. In Chro
 3. Automated RSS Push Notifications
 
 == Upgrade Notice ==
+= 1.0.1 =
+Minor bug fixes.
 = 1.0.0 =
 It's official! You can now send remote notifications to your website visitors.
 
 
 == Changelog ==
+
+= 1.0.1 =
+* Added correct WordPress tested version and plugin stable tag
 
 = 1.0.0 =
 * Initial plugin submission
