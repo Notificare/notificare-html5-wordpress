@@ -69,6 +69,12 @@ It's official! You can now send remote notifications to your website visitors.
 
 == Changelog ==
 
+= 1.1.1 =
+* Bumped tested version and plugin stable tag
+
+= 1.1.0 =
+* Updated to latest 1.8.0 SDK
+
 = 1.0.1 =
 * Added correct WordPress tested version and plugin stable tag
 
