@@ -1,6 +1,6 @@
 {
   "name": "notificare",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "devDependencies": {
     "grunt": "~0.4.4",
     "grunt-contrib-uglify": "~0.2.0",

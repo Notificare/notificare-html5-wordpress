@@ -52,11 +52,7 @@ self.addEventListener('push', function (event) {
                             tag: notificationTag
                         });
                     } else {
-                        return self.registration.showNotification(application.name, {
-                            body: 'We\'ve got a new message',
-                            icon: theConfig.awsStorage + application.websitePushConfig.icon,
-                            tag: 'user_visible_auto_notification'
-                        });
+                        return null;
                     }
                 }).catch(function(err) {
                     console.log('Notificare: Failed to fetch message', err);

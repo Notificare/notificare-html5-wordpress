@@ -2,8 +2,6 @@
 header("Content-Type: application/javascript;charset=utf-8");
 
 $contents = array(
-      "apiUrl" => "https://cloud.notifica.re/api",
-      "awsStorage" => "https://s3-eu-west-1.amazonaws.com/notificare-storage",
       "appHost" => $_GET['appHost'],
       "appVersion" => $_GET['appVersion'],
       "appKey" => $_GET['appKey'],

@@ -1,10 +1,10 @@
 /*
- *  Notificare JS for jQuery - v1.7.1
+ *  Notificare JS for jQuery - v1.8.0
  *  jQuery Library for Notificare
  *  http://notifica.re
  *
  *  @author Joel Oliveira joel@notifica.re
- *  copyright 2015 Notificare
+ *  copyright 2016 Notificare
  */
 
 ;(function ( $, window, document, undefined ) {
@@ -12,7 +12,7 @@
     // Create the defaults once
     var pluginName = "notificare",
         defaults = {
-            sdkVersion: '1.7.1',
+            sdkVersion: '1.8.0',
             websitePushUrl: "https://push.notifica.re/website-push/safari",
             fullHost: window.location.protocol + '//' +  window.location.host,
             wssUrl: "wss://websocket.notifica.re",
@@ -47,6 +47,7 @@
             this.safariPush = false;
             this.chromePush = false;
 
+            //Initial set of regions, location and badge
             if(typeof(Storage) !== "undefined") {
                 if(!localStorage.getItem("regions")){
                     localStorage.setItem("regions", JSON.stringify([]));
@@ -65,15 +66,14 @@
             }
 
             this.options = $.extend( {}, defaults, PLUGIN_OPTIONS );
+            if(this.options.useTestEnv){
+                this.options.apiUrl = "https://cloud-test.notifica.re/api";
+                this.options.awsStorage = "https://push-test.notifica.re/upload";
+            } else {
+                this.options.apiUrl = "https://cloud.notifica.re/api";
+                this.options.awsStorage = "https://push.notifica.re/upload";
+            }
             this._getApplicationInfo();
-
-            //this._initWithConfig(function(options){
-            //    this.options = $.extend( {}, defaults, options );
-            //    this._getApplicationInfo();
-            //}.bind(this), function(errors){
-            //    console.log('Notificare: Please make sure you have a config.json file in the root of your webapp');
-            //}.bind(this));
-
 
         },
 
@@ -193,7 +193,6 @@
                             if(data && data.length > 1){
                                 switch(data[0]) {
                                     case 'notificationclick':
-                                        console.log('notification clicked');
                                         this._handleClickOnChromeNotification(data[1]);
                                         break;
                                     case 'notificationreceived':
@@ -530,7 +529,7 @@
 
             $.ajax({
                 type: "GET",
-                url: PLUGIN_DIR + 'config.json.php'
+                url: '/config.json'
             }).done(function( msg ) {
 
                 success(msg);
@@ -554,6 +553,8 @@
                 }.bind(this)
             }).done(function( msg ) {
                 this.applicationInfo = msg.application;
+                this.services = msg.application.services;
+
                 $(this.element).trigger("notificare:onReady", msg.application);
 
                 this._handleSession();
@@ -650,20 +651,6 @@
          */
         _getNotification: function (notification) {
 
-            this.logEvent({
-                sessionID: this.uniqueId,
-                type: 're.notifica.event.notification.Receive',
-                notification: notification.notificationId || notification.id,
-                userID: this.options.userId || null,
-                deviceID: this._getCookie('uuid')
-            },  function(data){
-
-            }, function(error){
-
-            });
-
-            $(this.element).trigger("notificare:didReceiveNotification", notification);
-
             $.ajax({
                 type: "GET",
                 url: this.options.apiUrl + '/notification/' + notification.id,
@@ -680,6 +667,21 @@
                     }
                     this.showNotification(msg);
                 }
+
+                this.logEvent({
+                    sessionID: this.uniqueId,
+                    type: 're.notifica.event.notification.Receive',
+                    notification: notification.notificationId || notification.id,
+                    userID: this.options.userId || null,
+                    deviceID: this._getCookie('uuid')
+                },  function(data){
+
+                }, function(error){
+
+                });
+
+                $(this.element).trigger("notificare:didReceiveNotification", notification);
+
             }.bind(this)).fail(function( msg ) {
                 setTimeout(function() {
                     this._getNotification(notification);
@@ -696,18 +698,6 @@
          */
         _getChromeNotification: function (notification) {
 
-            this.logEvent({
-                sessionID: this.uniqueId,
-                type: 're.notifica.event.notification.Receive',
-                notification: notification,
-                userID: this.options.userId || null,
-                deviceID: this._getCookie('uuid')
-            },  function(data){
-
-            }, function(error){
-
-            });
-
             $.ajax({
                 type: "GET",
                 url: this.options.apiUrl + '/notification/' + notification,
@@ -715,6 +705,18 @@
                     xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                 }.bind(this)
             }).done(function( msg ) {
+
+                this.logEvent({
+                    sessionID: this.uniqueId,
+                    type: 're.notifica.event.notification.Receive',
+                    notification: notification,
+                    userID: this.options.userId || null,
+                    deviceID: this._getCookie('uuid')
+                },  function(data){
+
+                }, function(error){
+
+                });
 
                 $(this.element).trigger("notificare:didReceiveNotification", msg.notification);
 
@@ -776,46 +778,74 @@
          */
         showNotification: function (msg) {
 
-            if ("Notification" in window) {
+            if (msg && msg.notification && msg.notification.message) {
+                if ("Notification" in window) {
 
-                var n = new Notification(
-                    this.applicationInfo.name,
-                    {
-                        'body': msg.notification.message,
-                        'tag': msg.notification._id,
-                        'icon': this.options.awsStorage + this.applicationInfo.websitePushConfig.icon
+                    try {
+                        var n = new Notification(
+                            this.applicationInfo.name,
+                            {
+                                'body': msg.notification.message,
+                                'tag': msg.notification._id,
+                                'icon': this.options.awsStorage + this.applicationInfo.websitePushConfig.icon
+                            }
+                        );
+                        // remove the notification from Notification Center when it is clicked
+                        n.onclick = function () {
+                            n.close();
+                            var url = this.applicationInfo.websitePushConfig.urlFormatString.replace("%@", msg.notification._id);
+                            window.location.replace(url);
+                            this._onURLLocationChanged();
+
+                        }.bind(this);
+
+                    } catch (e) {
+
+                        //If native Notification is not possible use the window.confirm
+                        var n = window.confirm(msg.notification.message);
+
+                        if (n == true) {
+                            var url = this.applicationInfo.websitePushConfig.urlFormatString.replace("%@", msg.notification._id);
+                            window.location.replace(url);
+                            this._onURLLocationChanged();
+                        }
+
                     }
-                );
-                // remove the notification from Notification Center when it is clicked
-                n.onclick = function () {
-                    n.close();
-                    var url = this.applicationInfo.websitePushConfig.urlFormatString.replace("%@", msg.notification._id);
-                    window.location.replace(url);
-                    this._onURLLocationChanged();
 
-                }.bind(this);
+                } else if ("webkitNotifications" in window) {
+                    var n = window.webkitNotifications.createNotification(this.options.awsStorage + this.applicationInfo.websitePushConfig.icon, this.applicationInfo.name, msg.notification.message);
+                    n.show();
+                    n.onclick = function () {
 
-            } else if ("webkitNotifications" in window) {
-                var n = window.webkitNotifications.createNotification(this.options.awsStorage + this.applicationInfo.websitePushConfig.icon, this.applicationInfo.name, msg.notification.message);
-                n.show();
-                n.onclick = function () {
+                        var url = this.applicationInfo.websitePushConfig.urlFormatString.replace("%@", msg.notification._id);
+                        window.location.replace(url);
+                        this._onURLLocationChanged();
 
-                    var url = this.applicationInfo.websitePushConfig.urlFormatString.replace("%@", msg.notification._id);
-                    window.location.replace(url);
-                    this._onURLLocationChanged();
+                    }.bind(this);
 
-                }.bind(this);
+                } else if ("mozNotification" in navigator) {
 
-            } else if ("mozNotification" in navigator) {
-                var n = navigator.mozNotification.createNotification(this.applicationInfo.name, msg.notification.message, this.options.awsStorage + this.applicationInfo.websitePushConfig.icon);
-                n.show();
-                n.onclick = function () {
+                    var n = navigator.mozNotification.createNotification(this.applicationInfo.name, msg.notification.message, this.options.awsStorage + this.applicationInfo.websitePushConfig.icon);
+                    n.show();
+                    n.onclick = function () {
 
-                    var url = this.applicationInfo.websitePushConfig.urlFormatString.replace("%@", msg.notification._id);
-                    window.location.replace(url);
-                    this._onURLLocationChanged();
+                        var url = this.applicationInfo.websitePushConfig.urlFormatString.replace("%@", msg.notification._id);
+                        window.location.replace(url);
+                        this._onURLLocationChanged();
 
-                }.bind(this);
+                    }.bind(this);
+
+                } else {
+
+                    //If native Notification is not possible use the window.confirm
+                    var n = window.confirm(msg.notification.message);
+
+                    if (n == true) {
+                        var url = this.applicationInfo.websitePushConfig.urlFormatString.replace("%@", msg.notification._id);
+                        window.location.replace(url);
+                        this._onURLLocationChanged();
+                    }
+                }
             }
 
             this._refreshBadge();
@@ -884,11 +914,11 @@
                 contentType: "application/json; charset=utf-8",
                 dataType: "json"
             }).done(function( msg ) {
-                success(msg);
-            }.bind(this))
-            .fail(function( msg ) {
-                errors('Notificare: Failed to register log');
-            }.bind(this));
+                    success(msg);
+                }.bind(this))
+                .fail(function( msg ) {
+                    errors('Notificare: Failed to register log');
+                }.bind(this));
         },
 
         /**
@@ -913,11 +943,11 @@
                 contentType: "application/json; charset=utf-8",
                 dataType: "json"
             }).done(function( msg ) {
-                success(msg);
-            }.bind(this))
-            .fail(function( msg ) {
-                errors('Notificare: Failed to register custom event');
-            }.bind(this));
+                    success(msg);
+                }.bind(this))
+                .fail(function( msg ) {
+                    errors('Notificare: Failed to register custom event');
+                }.bind(this));
         },
         /**
          * Get tags for a device
@@ -933,11 +963,11 @@
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this)
                 }).done(function( msg ) {
-                    success(msg.tags);
-                }.bind(this))
-                .fail(function( msg ) {
-                    errors("Notificare: Failed to get tags for device");
-                }.bind(this));
+                        success(msg.tags);
+                    }.bind(this))
+                    .fail(function( msg ) {
+                        errors("Notificare: Failed to get tags for device");
+                    }.bind(this));
             } else {
                 errors('Notificare: Calling get tags before having a deviceId');
             }
@@ -962,11 +992,11 @@
                     contentType: "application/json; charset=utf-8",
                     dataType: "json"
                 }).done(function( msg ) {
-                    success(msg);
-                }.bind(this))
-                .fail(function( msg ) {
-                    errors("Notificare: Failed to add tags to device");
-                }.bind(this));
+                        success(msg);
+                    }.bind(this))
+                    .fail(function( msg ) {
+                        errors("Notificare: Failed to add tags to device");
+                    }.bind(this));
             } else {
                 errors("Notificare: Calling addTags before registering a deviceId");
             }
@@ -992,11 +1022,11 @@
                     contentType: "application/json; charset=utf-8",
                     dataType: "json"
                 }).done(function( msg ) {
-                    success(msg);
-                }.bind(this))
-                .fail(function( msg ) {
-                    errors(null);
-                }.bind(this));
+                        success(msg);
+                    }.bind(this))
+                    .fail(function( msg ) {
+                        errors(null);
+                    }.bind(this));
             } else {
                 errors("Notificare: Calling removeTag before registering a deviceId");
             }
@@ -1019,11 +1049,11 @@
                     contentType: "application/json; charset=utf-8",
                     dataType: "json"
                 }).done(function( msg ) {
-                    success(msg);
-                }.bind(this))
-                .fail(function( msg ) {
-                    errors("Failed to clear device tags.");
-                }.bind(this));
+                        success(msg);
+                    }.bind(this))
+                    .fail(function( msg ) {
+                        errors("Failed to clear device tags.");
+                    }.bind(this));
             } else {
                 errors("Notificare: Calling clearTags before registering a deviceId");
             }
@@ -1137,22 +1167,22 @@
                 contentType: "application/json; charset=utf-8",
                 dataType: "json"
             }).done(function( msg ) {
-                localStorage.setItem("position", JSON.stringify({
-                    accuracy: (!isNaN(position.coords.accuracy)) ? position.coords.accuracy : null,
-                    altitude: (!isNaN(position.coords.altitude)) ? position.coords.altitude : null,
-                    altitudeAccuracy: (!isNaN(position.coords.altitudeAccuracy)) ? position.coords.altitudeAccuracy : null,
-                    heading: (!isNaN(position.coords.heading)) ? position.coords.heading : null,
-                    speed: (!isNaN(position.coords.speed)) ? position.coords.speed : null,
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
-                    country: country,
-                    timestamp: position.timestamp
-                }));
-                success(JSON.parse(localStorage.getItem("position")));
-            }.bind(this))
-            .fail(function( msg ) {
-                errors(null);
-            }.bind(this));
+                    localStorage.setItem("position", JSON.stringify({
+                        accuracy: (!isNaN(position.coords.accuracy)) ? position.coords.accuracy : null,
+                        altitude: (!isNaN(position.coords.altitude)) ? position.coords.altitude : null,
+                        altitudeAccuracy: (!isNaN(position.coords.altitudeAccuracy)) ? position.coords.altitudeAccuracy : null,
+                        heading: (!isNaN(position.coords.heading)) ? position.coords.heading : null,
+                        speed: (!isNaN(position.coords.speed)) ? position.coords.speed : null,
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        country: country,
+                        timestamp: position.timestamp
+                    }));
+                    success(JSON.parse(localStorage.getItem("position")));
+                }.bind(this))
+                .fail(function( msg ) {
+                    errors(null);
+                }.bind(this));
 
         },
 
@@ -1186,9 +1216,9 @@
          */
         openInboxItem: function (inboxItem) {
 
-           this.openNotification({
-               id: inboxItem.notification
-           });
+            this.openNotification({
+                id: inboxItem.notification
+            });
 
         },
         /**
@@ -1226,12 +1256,12 @@
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this)
                 }).done(function( msg ) {
-                    this._refreshBadge();
-                    success(msg);
-                }.bind(this))
-                .fail(function( msg ) {
-                    errors("Notificare: Failed to clear the inbox");
-                }.bind(this));
+                        this._refreshBadge();
+                        success(msg);
+                    }.bind(this))
+                    .fail(function( msg ) {
+                        errors("Notificare: Failed to clear the inbox");
+                    }.bind(this));
             } else {
                 errors('Notificare: Calling clearInbox before having a deviceId');
             }
@@ -1251,12 +1281,12 @@
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this)
                 }).done(function( msg ) {
-                    this._refreshBadge();
-                    success(msg);
-                }.bind(this))
-                .fail(function( msg ) {
-                    errors("Notificare: Failed to remove item from inbox");
-                }.bind(this));
+                        this._refreshBadge();
+                        success(msg);
+                    }.bind(this))
+                    .fail(function( msg ) {
+                        errors("Notificare: Failed to remove item from inbox");
+                    }.bind(this));
             } else {
                 errors('Notificare: Calling removeFromInbox before having a deviceId');
             }
@@ -1279,12 +1309,12 @@
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this)
                 }).done(function( msg ) {
-                    localStorage.setItem("badge", msg.unread);
-                    $(this.element).trigger("notificare:didUpdateBadge", msg.unread);
-                }.bind(this))
-                .fail(function( msg ) {
-                    $(this.element).trigger("notificare:didUpdateBadge", localStorage.getItem("badge"));
-                }.bind(this));
+                        localStorage.setItem("badge", msg.unread);
+                        $(this.element).trigger("notificare:didUpdateBadge", msg.unread);
+                    }.bind(this))
+                    .fail(function( msg ) {
+                        $(this.element).trigger("notificare:didUpdateBadge", localStorage.getItem("badge"));
+                    }.bind(this));
             } else {
                 errors('Notificare: Refreshing Badge before having a deviceId');
             }
@@ -1336,11 +1366,11 @@
                 }.bind(this),
                 data: null
             }).done(function( msg ) {
-                success(msg.regions);
-            }.bind(this))
-            .fail(function( msg ) {
-                errors('Notificare: Failed to retrieve nearest regions');
-            }.bind(this));
+                    success(msg.regions);
+                }.bind(this))
+                .fail(function( msg ) {
+                    errors('Notificare: Failed to retrieve nearest regions');
+                }.bind(this));
 
         },
 
@@ -1390,23 +1420,23 @@
                 }
             }).done(function( msg ) {
 
-                if(msg.status === 'OK' && msg.results && msg.results.length > 0){
+                    if(msg.status === 'OK' && msg.results && msg.results.length > 0){
 
-                    callback({
-                        country: msg.results[msg.results.length - 1].address_components[0].short_name
-                    });
-                } else {
+                        callback({
+                            country: msg.results[msg.results.length - 1].address_components[0].short_name
+                        });
+                    } else {
+                        callback({
+                            country: null
+                        });
+                    }
+
+                }.bind(this))
+                .fail(function( msg ) {
                     callback({
                         country: null
                     });
-                }
-
-            }.bind(this))
-            .fail(function( msg ) {
-                callback({
-                    country: null
-                });
-            }.bind(this));
+                }.bind(this));
 
         },
         /**
@@ -1432,14 +1462,78 @@
                     contentType: "application/json; charset=utf-8",
                     dataType: "json"
                 }).done(function (msg) {
-                    success(msg);
-                }.bind(this))
-                .fail(function (msg) {
-                    errors('Notificare: Failed to register reply');
-                }.bind(this));
+                        success(msg);
+                    }.bind(this))
+                    .fail(function (msg) {
+                        errors('Notificare: Failed to register reply');
+                    }.bind(this));
             } else {
                 errors("Notificare: Calling reply before registering a deviceId");
             }
+        },
+
+        /**
+         * Fetch a list of assets for a group
+         * @param group name
+         */
+        fetchAssets: function (group, success, errors) {
+
+            if (this.applicationInfo.services.storage) {
+                $.ajax({
+                    type: "GET",
+                    url: this.options.apiUrl + '/asset/forgroup/' + group,
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
+                    }.bind(this)
+                }).done(function( msg ) {
+
+                        var assets = [];
+
+                        $.each( msg.assets, function( index, asset ){
+                            assets.push({
+                                title: asset.title,
+                                description: asset.description,
+                                url: 'https://push.notifica.re/asset/file/' + asset.key,
+                                metaData: asset.metaData,
+                                button: asset.button
+                            });
+                        }.bind(this));
+
+                        success(assets);
+                    }.bind(this))
+                    .fail(function( msg ) {
+                        errors("Notificare: Failed to get assets for this group");
+                    }.bind(this))
+            } else {
+                errors("Notificare: This is a add-on service, please activate in order to use this method");
+            }
+
+        },
+
+
+        /**
+         * Fetch a specific pass by serial
+         * @param serial
+         */
+        fetchPass: function (serial, success, errors) {
+
+            if (this.applicationInfo.services.passbook) {
+                $.ajax({
+                    type: "GET",
+                    url: this.options.apiUrl + '/pass/forserial/' + serial,
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
+                    }.bind(this)
+                }).done(function( msg ) {
+                        success(msg.pass);
+                    }.bind(this))
+                    .fail(function( msg ) {
+                        errors("Notificare: Failed to get pass for this serial");
+                    }.bind(this))
+            } else {
+                errors("Notificare: This is a add-on service, please activate in order to use this method");
+            }
+
         },
 
         _trigger: function (type, region, success, errors) {
@@ -1457,11 +1551,11 @@
                 contentType: "application/json; charset=utf-8",
                 dataType: "json"
             }).done(function (msg) {
-                success(msg);
-            }.bind(this))
-            .fail(function (msg) {
-                errors('Notificare: Failed to trigger region');
-            }.bind(this));
+                    success(msg);
+                }.bind(this))
+                .fail(function (msg) {
+                    errors('Notificare: Failed to trigger region');
+                }.bind(this));
 
         }
     };

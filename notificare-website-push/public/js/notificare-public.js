@@ -8,6 +8,18 @@
 		$("body").bind("notificare:onReady", function(event, data) {
 			instance.notificare("registerForNotifications");
 
+			instance.notificare("fetchAssets", "GROUP_NAME", function(assets){
+				console.log(assets);
+			}, function(error){
+				console.log(error);
+			});
+
+			instance.notificare("fetchPass", "SERIAL", function(pass){
+				console.log(pass);
+			}, function(error){
+				console.log(error);
+			});
+
 		});
 
 		$("body").bind("notificare:didReceiveDeviceToken", function(event, data) {
