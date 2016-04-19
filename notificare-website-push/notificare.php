@@ -16,7 +16,7 @@
  * Plugin Name:       Notificare
  * Plugin URI:        https://notifica.re
  * Description:       Smart push notifications for WordPress websites.
- * Version:           1.1.2
+ * Version:           1.1.3
  * Author:            Notificare
  * Author URI:        https://notifica.re
  * License:           GPL-2.0+

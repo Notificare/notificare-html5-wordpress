@@ -4,7 +4,7 @@ Donate link: https://notifica.re
 Tags: push notifications, safari push, chrome push, firefox push, websockets
 Requires at least: 3.0.1
 Tested up to: 4.5
-Stable tag: 1.1.2
+Stable tag: 1.1.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -56,6 +56,8 @@ All the major browsers out there support our Website Push functionality. In Chro
 3. Automated RSS Push Notifications
 
 == Upgrade Notice ==
+= 1.1.3 =
+Important bug fixes and improvements
 = 1.1.2 =
 All new 1.8.0 Notificare SDK features:
 * New add-on Storage which allows your website to use assets uploaded to Notificare.
@@ -78,6 +80,10 @@ It's official! You can now send remote notifications to your website visitors.
 
 
 == Changelog ==
+= 1.1.3 =
+* Added unregister device method
+* Fixes for push worker
+
 = 1.1.2 =
 * Bumped tested version and plugin stable tag
 

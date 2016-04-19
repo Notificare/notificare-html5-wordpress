@@ -13,20 +13,20 @@ self.addEventListener('push', function (event) {
 
     event.waitUntil(
 
-        fetch(theConfig.apiUrl + '/application/info', {
-            headers: new Headers({
-                "Authorization": "Basic " + btoa(theConfig.appKey + ":" + theConfig.appSecret)
-            })
-        }).then(function(response) {
-            return response.json();
-        }).then(function(info) {
+        self.registration.pushManager.getSubscription().then(function(deviceSubscription){
 
-            var application = info.application;
-            theApplication = application;
+            return fetch(theConfig.apiUrl + '/application/info', {
+                headers: new Headers({
+                    "Authorization": "Basic " + btoa(theConfig.appKey + ":" + theConfig.appSecret)
+                })
+            }).then(function(response) {
+                return response.json();
+            }).then(function(info) {
 
-            self.registration.pushManager.getSubscription().then(function(data){
+                var application = info.application;
+                theApplication = application;
 
-                fetch(theConfig.apiUrl + '/notification/inbox/fordevice/' + getPushToken(data) + '?skip=0&limit=1',{
+                return fetch(theConfig.apiUrl + '/notification/inbox/fordevice/' + getPushToken(deviceSubscription) + '?skip=0&limit=1',{
                     headers: new Headers({
                         "Authorization": "Basic " + btoa(theConfig.appKey + ":" + theConfig.appSecret)
                     })
@@ -58,13 +58,14 @@ self.addEventListener('push', function (event) {
                     console.log('Notificare: Failed to fetch message', err);
                     return null;
                 })
+
             }).catch(function(e){
-                console.log('Notificare: Failed to get subscription', e);
+                console.log('Notificare: Failed to get application info', e);
                 return null;
             })
 
         }).catch(function(e){
-            console.log('Notificare: Failed to get application info', e);
+            console.log('Notificare: Failed to get subscription', e);
             return null;
         })
 

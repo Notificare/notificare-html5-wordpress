@@ -12,7 +12,7 @@
     // Create the defaults once
     var pluginName = "notificare",
         defaults = {
-            sdkVersion: '1.8.0',
+            sdkVersion: '1.8.1',
             websitePushUrl: "https://push.notifica.re/website-push/safari",
             fullHost: window.location.protocol + '//' +  window.location.host,
             wssUrl: "wss://websocket.notifica.re",
@@ -591,6 +591,20 @@
                 navigator.serviceWorker.controller.postMessage(message, [messageChannel.port2]);
             });
         },
+
+        /**
+         *
+         * Check for device registration
+         */
+
+        isDeviceRegistered: function(){
+            if(this._getCookie('uuid')){
+                return true;
+            } else {
+                return false;
+            }
+        },
+
         /**
          *
          * Register Device
@@ -644,6 +658,33 @@
                 $(this.element).trigger("notificare:didFailToRegisterDevice", uuid);
             }.bind(this));
         },
+
+        /**
+         *
+         * Unregister Device
+         */
+        unregisterDevice: function (success, errors) {
+
+            if (this._getCookie('uuid')) {
+                $.ajax({
+                    type: "DELETE",
+                    url: this.options.apiUrl + '/device/' + this._getCookie('uuid'),
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
+                    }.bind(this)
+                }).done(function( msg ) {
+                        this._setCookie("");
+                        localStorage.setItem("badge", 0);
+                        $(this.element).trigger("notificare:didUpdateBadge", 0);
+                        success(msg);
+                    }.bind(this))
+                    .fail(function( msg ) {
+                        errors("Notificare: Failed to delete a UUID");
+                    }.bind(this));
+            }
+
+        },
+
         /**
          * Get a notification object
          * @param notification
