@@ -12,7 +12,7 @@
     // Create the defaults once
     var pluginName = "notificare",
         defaults = {
-            sdkVersion: '1.8.2',
+            sdkVersion: '1.9.0',
             websitePushUrl: "https://push.notifica.re/website-push/safari",
             fullHost: window.location.protocol + '//' +  window.location.host,
             wssUrl: "wss://websocket.notifica.re",
@@ -65,7 +65,7 @@
                 }
             }
 
-            this.options = $.extend( {}, defaults, PLUGIN_OPTIONS );
+            this.options = $.extend( {}, defaults, NOTIFICARE_PLUGIN_OPTIONS );
             if(this.options.useTestEnv){
                 this.options.apiUrl = "https://cloud-test.notifica.re/api";
                 this.options.awsStorage = "https://push-test.notifica.re/upload";
@@ -545,27 +545,44 @@
          */
         _getApplicationInfo: function () {
 
-            $.ajax({
-                type: "GET",
-                url: this.options.apiUrl + '/application/info',
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
-                }.bind(this)
-            }).done(function( msg ) {
-                this.applicationInfo = msg.application;
-                this.services = msg.application.services;
+            if (this.options.appKey && this.options.appSecret) {
 
-                $(this.element).trigger("notificare:onReady", msg.application);
+                $.ajax({
+                    type: "GET",
+                    url: this.options.apiUrl + '/application/info',
+                    crossDomain: true,
+                    beforeSend: function (xhr) {
+                        xhr.withCredentials = true;
+                        xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
+                    }.bind(this)
+                }).done(function( msg ) {
+                    this.applicationInfo = msg.application;
+                    this.services = msg.application.services;
 
-                this._handleSession();
+                    $(this.element).trigger("notificare:onReady", msg.application);
 
-                this._onURLLocationChanged();
+                    this._handleSession();
 
-            }.bind(this)).fail(function( msg ) {
-                setTimeout(function() {
-                    this._getApplicationInfo();
-                }.bind(this), 2000);
-            }.bind(this));
+                    this._onURLLocationChanged();
+
+                }.bind(this)).fail(function(  jqXHR, textStatus, errorThrown ) {
+
+                    if( jqXHR.status == 502 ||
+                        jqXHR.status == 503 ||
+                        jqXHR.status == 504 ||
+                        jqXHR.status < 0  ) {
+                        setTimeout(function() {
+                            this._getApplicationInfo();
+                        }.bind(this), 2000);
+                    }
+
+                }.bind(this));
+
+            } else {
+
+                console.warn('Notificare: Please make sure you provide proper application keys');
+
+            }
 
         },
 
@@ -1097,6 +1114,146 @@
                     }.bind(this));
             } else {
                 errors("Notificare: Calling clearTags before registering a deviceId");
+            }
+        },
+
+
+        /**
+         * Fetch User Data
+         * @param success
+         * @param errors
+         */
+        fetchUserData: function (success, errors) {
+            if (this._getCookie('uuid')) {
+                $.ajax({
+                    type: "GET",
+                    url: this.options.apiUrl + '/device/' + this._getCookie('uuid') + '/userdata',
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
+                    }.bind(this)
+                }).done(function( msg ) {
+                        success(msg.userData);
+                    }.bind(this))
+                    .fail(function(  jqXHR, textStatus, errorThrown ) {
+                        errors("Notificare: Failed to get user data for device");
+                    }.bind(this));
+            } else {
+                errors('Notificare: Calling fetch user data before having a deviceId');
+            }
+        },
+        /**
+         * Update User Data
+         * @param data
+         * @param success
+         * @param errors
+         */
+        updateUserData: function (data, success, errors) {
+            if (this._getCookie('uuid')) {
+                $.ajax({
+                    type: "PUT",
+                    url: this.options.apiUrl + '/device/' + this._getCookie('uuid') + '/userdata',
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
+                    }.bind(this),
+                    data: JSON.stringify(data),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json"
+                }).done(function( msg ) {
+                        success(msg);
+                    }.bind(this))
+                    .fail(function(  jqXHR, textStatus, errorThrown ) {
+                        errors("Notificare: Failed to update user data for device");
+                    }.bind(this));
+            } else {
+                errors("Notificare: Calling update user data before registering a deviceId");
+            }
+        },
+
+        /**
+         * Fetch Do Not Disturb
+         * @param success
+         * @param errors
+         */
+        fetchDoNotDisturb: function (success, errors) {
+            if (this._getCookie('uuid')) {
+                $.ajax({
+                    type: "GET",
+                    url: this.options.apiUrl + '/device/' + this._getCookie('uuid') + '/dnd',
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
+                    }.bind(this)
+                }).done(function( msg ) {
+                        success(msg.dnd);
+                    }.bind(this))
+                    .fail(function(  jqXHR, textStatus, errorThrown ) {
+                        errors("Notificare: Failed to get dnd for device");
+                    }.bind(this));
+            } else {
+                errors('Notificare: Calling fetch dnd before having a deviceId');
+            }
+        },
+        /**
+         * Update Do Not Disturb
+         * @param data
+         * @param success
+         * @param errors
+         */
+        updateDoNotDisturb: function (start, end, success, errors) {
+            if (this._getCookie('uuid')) {
+
+                if (start && end) {
+
+                    $.ajax({
+                        type: "PUT",
+                        url: this.options.apiUrl + '/device/' + this._getCookie('uuid') + '/dnd',
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
+                        }.bind(this),
+                        data: JSON.stringify({
+                            start: start,
+                            end: end
+                        }),
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json"
+                    }).done(function( msg ) {
+                            success(msg);
+                        }.bind(this))
+                        .fail(function(  jqXHR, textStatus, errorThrown ) {
+                            errors("Notificare: Failed to update dnd for device");
+                        }.bind(this));
+                } else {
+                    errors("Notificare: Calling update dnd without a start and end time");
+                }
+
+            } else {
+                errors("Notificare: Calling update dnd before registering a deviceId");
+            }
+        },
+        /**
+         * Clear Do Not Disturb
+         * @param data
+         * @param success
+         * @param errors
+         */
+        clearDoNotDisturb: function (success, errors) {
+            if (this._getCookie('uuid')) {
+                $.ajax({
+                    type: "PUT",
+                    url: this.options.apiUrl + '/device/' + this._getCookie('uuid') + '/cleardnd',
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
+                    }.bind(this),
+                    data: null,
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json"
+                }).done(function( msg ) {
+                        success(msg);
+                    }.bind(this))
+                    .fail(function(  jqXHR, textStatus, errorThrown ) {
+                        errors("Notificare: Failed to clear dnd for device");
+                    }.bind(this));
+            } else {
+                errors("Notificare: Calling clear dnd before registering a deviceId");
             }
         },
 

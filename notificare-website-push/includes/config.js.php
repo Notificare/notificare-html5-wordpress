@@ -17,5 +17,5 @@ $contents = array(
         )
 );
 
-echo 'PLUGIN_OPTIONS = ' . json_encode( $contents ) . ';' ;
+echo 'NOTIFICARE_PLUGIN_OPTIONS = ' . json_encode( $contents ) . ';' ;
 ?>
