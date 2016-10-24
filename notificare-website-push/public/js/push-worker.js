@@ -35,10 +35,10 @@ self.addEventListener('push', function (event) {
                 }).then(function(data) {
 
                     if(data && data.inboxItems && data.inboxItems.length > 0){
-                        var title = application.name;
+                        var title = theApplication.name;
                         var message = data.inboxItems[0].message;
-                        var icon = theConfig.awsStorage + application.websitePushConfig.icon;
-                        var notificationTag = data.inboxItems[0].notification;
+                        var icon = theConfig.awsStorage + theApplication.websitePushConfig.icon;
+                        var notificationTag = data.inboxItems[0]._id;
 
                         self.clients.matchAll().then(function(clients) {
                             clients.forEach(function(client) {
@@ -46,11 +46,29 @@ self.addEventListener('push', function (event) {
                             });
                         });
 
-                        return self.registration.showNotification(title, {
-                            body: message,
-                            icon: icon,
-                            tag: notificationTag
+                        return fetch(theConfig.apiUrl + '/notification/' + data.inboxItems[0].notification ,{
+                            headers: new Headers({
+                                "Authorization": "Basic " + btoa(theConfig.appKey + ":" + theConfig.appSecret)
+                            })
+                        }).then(function(response) {
+                            return response.json();
+                        }).then(function(data) {
+
+                            var actions = [];
+                            data.notification.actions.forEach(function(a){
+                                actions.push({
+                                    title: a.label,
+                                    action: a.label
+                                });
+                            });
+                            return self.registration.showNotification(title, {
+                                body: message,
+                                icon: icon,
+                                tag: notificationTag,
+                                actions: actions
+                            });
                         });
+
                     } else {
                         return null;
                     }
@@ -81,29 +99,52 @@ self.addEventListener('notificationclick', function (event) {
     event.waitUntil(
 
         self.clients.matchAll({
-            type: "window"
-        })
-        .then(function(clientList) {
+                type: "window"
+            })
+            .then(function(clientList) {
 
-            clientList.forEach(function(client) {
+                clientList.forEach(function(client) {
 
-                if(event.notification.tag != 'user_visible_auto_notification'){
                     if (client  && client.url == theConfig.appHost + '/' && 'focus' in client){
-                        client.postMessage('notificationclick:' + event.notification.tag);
+
+                        if (event.action) {
+
+                            self.clients.matchAll().then(function(clients) {
+                                clients.forEach(function(client) {
+                                    client.postMessage('notificationreplied:' + event.notification.tag + '|' + event.action);
+                                });
+                            });
+
+                        } else {
+
+                            client.postMessage('notificationclick:' + event.notification.tag);
+
+                        }
                         return client.focus();
                     }
+                });
+
+                if (clientList.length == 0) {
+                    var url = theApplication.websitePushConfig.urlFormatString.replace("%@", event.notification.tag);
+
+                    if (event.action) {
+
+                        self.clients.matchAll().then(function(clients) {
+                            clients.forEach(function(client) {
+                                client.postMessage('notificationreplied:' + event.notification.tag + '|' + event.action);
+                            });
+                        });
+
+                    }
+
+                    return clients.openWindow(url);
                 }
-            });
 
-            if (clientList.length == 0) {
-                var url = theApplication.websitePushConfig.urlFormatString.replace("%@", event.notification.tag);
-                return clients.openWindow(url);
-            }
-
-        })
+            })
 
 
     );
+
 });
 
 //Set the callback for the activate step
@@ -125,9 +166,11 @@ self.addEventListener('install', function(event) {
 
 self.addEventListener("message", function(e) {
 
-    switch(e.data.action) {
+    var data = JSON.parse(e.data);
+
+    switch(data.action) {
         case 'init':
-            theConfig = e.data.options;
+            theConfig = data.options;
             break;
         case 'update':
             //
