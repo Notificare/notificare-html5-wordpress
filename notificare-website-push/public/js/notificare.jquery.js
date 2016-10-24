@@ -1,5 +1,5 @@
 /*
- *  Notificare JS for jQuery - v1.8.0
+ *  Notificare JS for jQuery - v1.9.0
  *  jQuery Library for Notificare
  *  http://notifica.re
  *
@@ -12,7 +12,7 @@
     // Create the defaults once
     var pluginName = "notificare",
         defaults = {
-            sdkVersion: '1.9.0',
+            sdkVersion: '1.9.1',
             websitePushUrl: "https://push.notifica.re/website-push/safari",
             fullHost: window.location.protocol + '//' +  window.location.host,
             wssUrl: "wss://websocket.notifica.re",
@@ -65,15 +65,32 @@
                 }
             }
 
-            this.options = $.extend( {}, defaults, NOTIFICARE_PLUGIN_OPTIONS );
-            if(this.options.useTestEnv){
-                this.options.apiUrl = "https://cloud-test.notifica.re/api";
-                this.options.awsStorage = "https://push-test.notifica.re/upload";
+            if (typeof NOTIFICARE_PLUGIN_OPTIONS  !== 'undefined') {
+                this.options = $.extend( {}, defaults, NOTIFICARE_PLUGIN_OPTIONS );
+                if(this.options.useTestEnv){
+                    this.options.apiUrl = "https://cloud-test.notifica.re/api";
+                    this.options.awsStorage = "https://push-test.notifica.re/upload";
+                } else {
+                    this.options.apiUrl = "https://cloud.notifica.re/api";
+                    this.options.awsStorage = "https://push.notifica.re/upload";
+                }
+                this._getApplicationInfo();
             } else {
-                this.options.apiUrl = "https://cloud.notifica.re/api";
-                this.options.awsStorage = "https://push.notifica.re/upload";
+                this._initWithConfig(function(options){
+                    this.options = $.extend( {}, defaults, options );
+                    if(this.options.useTestEnv){
+                        this.options.apiUrl = "https://cloud-test.notifica.re/api";
+                        this.options.awsStorage = "https://push-test.notifica.re/upload";
+                    } else {
+                        this.options.apiUrl = "https://cloud.notifica.re/api";
+                        this.options.awsStorage = "https://push.notifica.re/upload";
+                    }
+                    this._getApplicationInfo();
+
+                }.bind(this), function(errors){
+                    console.warn('Notificare: Please make sure you have a config.json file in the root of your webapp');
+                }.bind(this));
             }
-            this._getApplicationInfo();
 
         },
 
@@ -197,6 +214,10 @@
                                         break;
                                     case 'notificationreceived':
                                         this._getChromeNotification(data[1]);
+                                        break;
+                                    case 'notificationreplied':
+                                        var action = data[1].split('|');
+                                        this._handleActionClickOnChromeNotification(action[0], action[1]);
                                         break;
                                     case 'workeractivated':
                                         this._sendMessage({
@@ -534,7 +555,7 @@
 
                 success(msg);
 
-            }.bind(this)).fail(function( msg ) {
+            }.bind(this)).fail(function(  jqXHR, textStatus, errorThrown ) {
                 errors(msg);
             }.bind(this));
 
@@ -565,6 +586,7 @@
 
                     this._onURLLocationChanged();
 
+
                 }.bind(this)).fail(function(  jqXHR, textStatus, errorThrown ) {
 
                     if( jqXHR.status == 502 ||
@@ -583,6 +605,7 @@
                 console.warn('Notificare: Please make sure you provide proper application keys');
 
             }
+
 
         },
 
@@ -605,23 +628,9 @@
                 // The service worker can then use the transferred port to reply via postMessage(), which
                 // will in turn trigger the onmessage handler on messageChannel.port1.
                 // See https://html.spec.whatwg.org/multipage/workers.html#dom-worker-postmessage
-                navigator.serviceWorker.controller.postMessage(message, [messageChannel.port2]);
+                navigator.serviceWorker.controller.postMessage(JSON.stringify(message), [messageChannel.port2]);
             });
         },
-
-        /**
-         *
-         * Check for device registration
-         */
-
-        isDeviceRegistered: function(){
-            if(this._getCookie('uuid')){
-                return true;
-            } else {
-                return false;
-            }
-        },
-
         /**
          *
          * Register Device
@@ -671,7 +680,7 @@
                 this._setCookie(uuid);
                 this._refreshBadge();
                 $(this.element).trigger("notificare:didRegisterDevice", uuid);
-            }.bind(this)).fail(function( msg ) {
+            }.bind(this)).fail(function(  jqXHR, textStatus, errorThrown ) {
                 $(this.element).trigger("notificare:didFailToRegisterDevice", uuid);
             }.bind(this));
         },
@@ -690,18 +699,17 @@
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this)
                 }).done(function( msg ) {
-                        this._setCookie("");
-                        localStorage.setItem("badge", 0);
-                        $(this.element).trigger("notificare:didUpdateBadge", 0);
-                        success(msg);
-                    }.bind(this))
-                    .fail(function( msg ) {
-                        errors("Notificare: Failed to delete a UUID");
-                    }.bind(this));
+                    this._setCookie("");
+                    localStorage.setItem("badge", 0);
+                    $(this.element).trigger("notificare:didUpdateBadge", 0);
+                    success(msg);
+                }.bind(this))
+                .fail(function(  jqXHR, textStatus, errorThrown ) {
+                    errors("Notificare: Failed to delete a UUID");
+                }.bind(this));
             }
 
         },
-
         /**
          * Get a notification object
          * @param notification
@@ -740,7 +748,7 @@
 
                 $(this.element).trigger("notificare:didReceiveNotification", notification);
 
-            }.bind(this)).fail(function( msg ) {
+            }.bind(this)).fail(function(  jqXHR, textStatus, errorThrown ) {
                 setTimeout(function() {
                     this._getNotification(notification);
                 }.bind(this), 2000);
@@ -787,7 +795,7 @@
                 }
 
                 this._refreshBadge();
-            }.bind(this)).fail(function( msg ) {
+            }.bind(this)).fail(function(  jqXHR, textStatus, errorThrown ) {
                 setTimeout(function() {
                     this._getChromeNotification(notification);
                 }.bind(this), 2000);
@@ -807,6 +815,521 @@
         },
 
         /**
+         * Handle action click of a Chrome Notification
+         * @param notification
+         * @private
+         */
+        _handleActionClickOnChromeNotification: function(notification, label){
+
+            $.ajax({
+                type: "GET",
+                url: this.options.apiUrl + '/notification/' + notification,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
+                }.bind(this)
+            }).done(function( msg ) {
+
+                this._logNotificationEvents(msg);
+                this._refreshBadge();
+
+                if (msg && msg.notification && msg.notification.actions && msg.notification.actions.length > 0) {
+
+                    msg.notification.actions.forEach(function(action){
+                        if (action.label == label) {
+                            this._executeAction(msg, action);
+                        }
+                    }.bind(this));
+
+                }
+
+            }.bind(this)).fail(function(  jqXHR, textStatus, errorThrown ) {
+                setTimeout(function() {
+                    this._handleActionClickOnChromeNotification(notification, label);
+                }.bind(this), 2000);
+            }.bind(this));
+        },
+
+        /**
+         * Helper method to execute the action
+         * @private
+         */
+        _executeAction: function(msg, action){
+
+            if (action) {
+
+                $(this.element).trigger("notificare:willExecuteAction", msg.notification);
+
+                var data = {};
+
+                if (action.type == "re.notifica.action.Browser" && action.target) {
+                    window.location.replace(action.target);
+                    this._replyOnAction(msg, action, data);
+                } else if (action.type == "re.notifica.action.Callback") {
+
+                    if (action.camera && action.keyboard && !action.target) {
+
+                        this._executeCameraAndKeyboard(msg, action, data);
+
+                    } else if (action.camera && !action.keyboard && !action.target) {
+
+                        this._executeCamera(msg, action, data);
+
+                    } else if (!action.camera && action.keyboard && !action.target) {
+
+                        this._executeKeyboard(msg, action, data);
+
+                    } else {
+
+                        if (action.target) {
+                            this._executeWebHook(msg, action, data);
+                        } else {
+                            this._replyOnAction(msg, action, null);
+                        }
+
+                    }
+
+                } else if (action.type == "re.notifica.action.Mail") {
+                    window.location.href = 'mailto:' + action.target;
+                    this._replyOnAction(msg, action, data);
+                } else if (action.type == "re.notifica.action.Custom") {
+                    $(this.element).trigger("notificare:shouldPerformActionWithURL", action.target);
+                    this._replyOnAction(msg, action, data);
+                } else {
+                    $(this.element).trigger("notificare:didFailToExecuteAction", msg.notification);
+                }
+
+            }
+
+        },
+
+        /**
+         * Helper method on reply on action
+         * @param msg
+         * @param action
+         * @param data
+         * @private
+         */
+        _replyOnAction: function(msg, action, data){
+            this.reply(msg.notification._id, action.label, data, function(){
+                $(this.element).trigger("notificare:didExecuteAction", msg.notification);
+            }, function(){
+                $(this.element).trigger("notificare:didFailToExecuteAction", msg.notification);
+            });
+
+        },
+
+        /**
+         * Helper method to execute a webhook
+         * @param msg
+         * @param action
+         * @param data
+         * @private
+         */
+        _executeWebHook: function(msg, action, data){
+
+            var queries, temp, i, l;
+
+            var queryString =  action.target.split("?");
+
+            if (queryString.length > 1) {
+                queries = queryString[1].split("&");
+                // Convert the array of strings into an object
+                for ( i = 0, l = queries.length; i < l; i++ ) {
+                    temp = queries[i].split('=');
+                    data[temp[0]] = temp[1];
+                }
+            }
+            data.target = queryString[0];
+            data.label = action.label;
+
+            if (msg.notification._id) {
+                data.notificationID = msg.notification._id;
+            }
+
+            if (this._getCookie('uuid')) {
+                data.deviceID = this._getCookie('uuid');
+            }
+
+            if (this.options.userId) {
+                data.userID = this.options.userId;
+            }
+
+
+            $.ajax({
+                type: "POST",
+                url: this.options.apiUrl + '/reply/webhook',
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
+                }.bind(this),
+                data: JSON.stringify(data),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json"
+            }).done(function( reply ) {
+
+                this._replyOnAction(msg, action, data);
+
+            }.bind(this)).fail(function(  jqXHR, textStatus, errorThrown ) {
+                setTimeout(function() {
+                    this._executeWebHook(msg, action, data);
+                }.bind(this), 2000);
+            }.bind(this));
+
+        },
+
+        /**
+         * Helper method for keyboard flow
+         * @param msg
+         * @param action
+         * @param data
+         * @private
+         */
+        _executeKeyboard: function(msg, action, data){
+
+            var textarea = $("<textarea>", {"class": "notificare-text-area"}),
+                send = $("<a>", {"class": "notificare-send", "href":"#"}),
+                close = $("<a>", {"class": "notificare-close-modal", "href":"#"}),
+                modal = $("<div>", {"class": "notificare-modal"}),
+                bg = $("<div>", {"class": "notificare-modal-bg"});
+
+            textarea.attr('placeholder', 'Type a reply');
+            send.text("Send");
+            close.text("Close");
+
+
+            modal.append(textarea);
+            modal.append(send);
+            modal.append(close);
+            bg.append(modal);
+            $("body").append(bg);
+
+            send.click(function(e){
+                e.preventDefault();
+                data = {message: textarea.val()};
+                this._replyOnAction(msg, action, data);
+                bg.remove();
+
+            }.bind(this));
+
+            close.click(function(e){
+                e.preventDefault();
+                $(this.element).trigger("notificare:didNotExecuteAction", msg.notification);
+                bg.remove();
+            }.bind(this));
+
+
+        },
+
+        /**
+         * Helper method for camera flow
+         * @param msg
+         * @param action
+         * @param data
+         * @private
+         */
+        _executeCamera: function(msg, action, data){
+
+            var canvas = $("<canvas>", {"class": "notificare-image"}),
+                context = canvas.get(0).getContext('2d'),
+                video = $("<video>", {"class": "notificare-camera"}),
+                send = $("<a>", {"class": "notificare-send", "href":"#"}),
+                cancel = $("<a>", {"class": "notificare-cancel", "href":"#"}),
+                close = $("<a>", {"class": "notificare-close-modal", "href":"#"}),
+                button = $("<a>", {"class": "notificare-capture-image", "href":"#"}),
+                modal = $("<div>", {"class": "notificare-modal"}),
+                bg = $("<div>", {"class": "notificare-modal-bg"});
+
+            cancel.text("Cancel");
+            send.text("Send");
+            button.text("Take Picture");
+            close.text("Close");
+
+            // Get access to the camera!
+            if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+
+                navigator.mediaDevices.getUserMedia({
+                    video: true
+                }).then(function(stream) {
+
+                    video.get(0).src = window.URL.createObjectURL(stream);
+                    video.get(0).play();
+
+                    modal.append(video);
+                    modal.append(button);
+                    modal.append(canvas);
+                    modal.append(send);
+                    modal.append(cancel);
+                    modal.append(close);
+                    bg.append(modal);
+                    $("body").append(bg);
+                    canvas.hide();
+                    send.hide();
+                    cancel.hide();
+
+                    button.click(function(e){
+                        e.preventDefault();
+                        context.drawImage(video.get(0), 0, 0, 320, 180);
+                        video.hide();
+                        button.hide();
+                        close.hide();
+                        canvas.show();
+                        send.show();
+                        cancel.show();
+
+                        video.get(0).src = "";
+                        video.get(0).pause();
+
+                    }.bind(this));
+
+
+                    send.click(function(e){
+                        e.preventDefault();
+                        var dataURL = canvas.get(0).toDataURL("image/png"),
+                            blob = this._dataURItoBlob(dataURL);
+
+                        this.uploadFile(blob, 'reply', function(fileURL){
+                            data = {media: fileURL};
+                            this._replyOnAction(msg, action, data);
+
+                        }.bind(this), function(){
+
+                        }.bind(this));
+
+                        video.get(0).src = "";
+                        video.get(0).pause();
+                        stream.getTracks()[0].stop();
+                        bg.remove();
+
+                    }.bind(this));
+
+                    cancel.click(function(e){
+                        e.preventDefault();
+                        canvas.hide();
+                        send.hide();
+                        cancel.hide();
+                        video.show();
+                        button.show();
+                        close.show();
+
+                        video.get(0).src = window.URL.createObjectURL(stream);
+                        video.get(0).play();
+
+                    }.bind(this));
+
+                    close.click(function(e){
+                        e.preventDefault();
+                        video.get(0).src = "";
+                        video.get(0).pause();
+                        stream.getTracks()[0].stop();
+                        $(this.element).trigger("notificare:didNotExecuteAction", msg.notification);
+                        bg.remove();
+                    }.bind(this));
+
+                }.bind(this));
+
+            }
+
+        },
+
+        /**
+         * Helper method for camera & keyboard flow
+         * @param msg
+         * @param action
+         * @param data
+         * @private
+         */
+        _executeCameraAndKeyboard: function(msg, action, data){
+
+            var canvas = $("<canvas>", {"class": "notificare-image"}),
+                textarea = $("<textarea>", {"class": "notificare-text-area"}),
+                context = canvas.get(0).getContext('2d'),
+                video = $("<video>", {"class": "notificare-camera"}),
+                next = $("<a>", {"class": "notificare-send", "href":"#"}),
+                send = $("<a>", {"class": "notificare-send", "href":"#"}),
+                cancel = $("<a>", {"class": "notificare-cancel", "href":"#"}),
+                close = $("<a>", {"class": "notificare-close-modal", "href":"#"}),
+                button = $("<a>", {"class": "notificare-capture-image", "href":"#"}),
+                modal = $("<div>", {"class": "notificare-modal"}),
+                bg = $("<div>", {"class": "notificare-modal-bg"});
+
+            textarea.attr('placeholder', 'Type a reply');
+            cancel.text("Cancel");
+            next.text("Next");
+            send.text("Send");
+            button.text("Take Picture");
+            close.text("Close");
+
+            // Get access to the camera!
+            if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+
+                navigator.mediaDevices.getUserMedia({
+                    video: true
+                }).then(function(stream) {
+
+                    video.get(0).src = window.URL.createObjectURL(stream);
+                    video.get(0).play();
+
+                    modal.append(textarea);
+                    modal.append(video);
+                    modal.append(button);
+                    modal.append(canvas);
+                    modal.append(send);
+                    modal.append(next);
+                    modal.append(cancel);
+                    modal.append(close);
+                    bg.append(modal);
+                    $("body").append(bg);
+                    canvas.hide();
+                    textarea.hide();
+                    send.hide();
+                    cancel.hide();
+                    next.hide();
+
+                    button.click(function(e){
+                        e.preventDefault();
+                        context.drawImage(video.get(0), 0, 0, 320, 180);
+                        video.hide();
+                        button.hide();
+                        close.hide();
+                        canvas.show();
+                        next.show();
+                        cancel.show();
+
+                        video.get(0).src = "";
+                        video.get(0).pause();
+
+                    }.bind(this));
+
+
+                    next.click(function(e){
+                        e.preventDefault();
+                        var dataURL = canvas.get(0).toDataURL("image/png"),
+                            blob = this._dataURItoBlob(dataURL);
+
+                        this.uploadFile(blob, 'reply', function(fileURL){
+                            data = {media: fileURL};
+                            textarea.show();
+                            send.show();
+                            canvas.hide();
+                            next.hide();
+
+                        }.bind(this), function(){
+
+                        }.bind(this));
+
+                        video.get(0).src = "";
+                        video.get(0).pause();
+                        stream.getTracks()[0].stop();
+
+                    }.bind(this));
+
+
+                    send.click(function(e){
+                        e.preventDefault();
+                        data['message'] = textarea.val();
+                        this._replyOnAction(msg, action, data);
+                        bg.remove();
+                    }.bind(this));
+
+                    cancel.click(function(e){
+                        e.preventDefault();
+                        canvas.hide();
+                        send.hide();
+                        cancel.hide();
+                        next.hide();
+                        textarea.hide();
+                        video.show();
+                        button.show();
+                        close.show();
+
+                        video.get(0).src = window.URL.createObjectURL(stream);
+                        video.get(0).play();
+
+                    }.bind(this));
+
+                    close.click(function(e){
+                        e.preventDefault();
+                        video.get(0).src = "";
+                        video.get(0).pause();
+                        stream.getTracks()[0].stop();
+                        $(this.element).trigger("notificare:didNotExecuteAction", msg.notification);
+                        bg.remove();
+                    }.bind(this));
+
+                }.bind(this));
+
+            }
+
+        },
+        /**
+         * Data URI from Blob
+         * @param dataURI
+         * @returns {*}
+         * @private
+         */
+        _dataURItoBlob: function(dataURI) {
+            // convert base64/URLEncoded data component to raw binary data held in a string
+            var byteString,
+                mimestring
+
+            if(dataURI.split(',')[0].indexOf('base64') !== -1 ) {
+                byteString = atob(dataURI.split(',')[1])
+            } else {
+                byteString = decodeURI(dataURI.split(',')[1])
+            }
+
+            mimestring = dataURI.split(',')[0].split(':')[1].split(';')[0]
+
+            var content = new Array();
+            for (var i = 0; i < byteString.length; i++) {
+                content[i] = byteString.charCodeAt(i)
+            }
+
+            return new Blob([new Uint8Array(content)], {type: mimestring});
+        },
+
+        /**
+         * Upload a file of type
+         * @param type
+         * @param success
+         * @param errors
+         */
+        uploadFile: function(file, type, success, errors) {
+
+            var formData = new FormData();
+            formData.append('file', file);
+
+            $.ajax({
+                type: "POST",
+                url: this.options.apiUrl + '/upload/' + type,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
+                }.bind(this),
+                data: formData,
+                contentType: false,
+                processData: false
+            }).done(function( reply ) {
+
+                success('https://s3-eu-west-1.amazonaws.com/notificare-storage' + reply.filename);
+
+            }.bind(this)).fail(function(  jqXHR, textStatus, errorThrown ) {
+
+                errors('Notificare: Failed to upload the image');
+
+            }.bind(this));
+
+        },
+        /**
+         * Helper method to check if user is registered
+         * @returns {boolean}
+         */
+        isDeviceRegistered: function(){
+            if(this._getCookie('uuid')){
+                return true;
+            } else {
+                return false;
+            }
+        },
+        /**
          * Open Notification
          * @param notification
          */
@@ -822,7 +1345,7 @@
                 $(this.element).trigger("notificare:didOpenNotification", msg.notification);
                 this._refreshBadge();
                 this._logNotificationEvents(msg);
-            }.bind(this)).fail(function( msg ) {
+            }.bind(this)).fail(function(  jqXHR, textStatus, errorThrown ) {
                 setTimeout(function() {
                     this.openNotification(notification);
                 }.bind(this), 2000);
@@ -972,11 +1495,11 @@
                 contentType: "application/json; charset=utf-8",
                 dataType: "json"
             }).done(function( msg ) {
-                    success(msg);
-                }.bind(this))
-                .fail(function( msg ) {
-                    errors('Notificare: Failed to register log');
-                }.bind(this));
+                success(msg);
+            }.bind(this))
+            .fail(function(  jqXHR, textStatus, errorThrown ) {
+                errors('Notificare: Failed to register log');
+            }.bind(this));
         },
 
         /**
@@ -1001,11 +1524,11 @@
                 contentType: "application/json; charset=utf-8",
                 dataType: "json"
             }).done(function( msg ) {
-                    success(msg);
-                }.bind(this))
-                .fail(function( msg ) {
-                    errors('Notificare: Failed to register custom event');
-                }.bind(this));
+                success(msg);
+            }.bind(this))
+            .fail(function(  jqXHR, textStatus, errorThrown ) {
+                errors('Notificare: Failed to register custom event');
+            }.bind(this));
         },
         /**
          * Get tags for a device
@@ -1021,11 +1544,11 @@
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this)
                 }).done(function( msg ) {
-                        success(msg.tags);
-                    }.bind(this))
-                    .fail(function( msg ) {
-                        errors("Notificare: Failed to get tags for device");
-                    }.bind(this));
+                    success(msg.tags);
+                }.bind(this))
+                .fail(function(  jqXHR, textStatus, errorThrown ) {
+                    errors("Notificare: Failed to get tags for device");
+                }.bind(this));
             } else {
                 errors('Notificare: Calling get tags before having a deviceId');
             }
@@ -1050,11 +1573,11 @@
                     contentType: "application/json; charset=utf-8",
                     dataType: "json"
                 }).done(function( msg ) {
-                        success(msg);
-                    }.bind(this))
-                    .fail(function( msg ) {
-                        errors("Notificare: Failed to add tags to device");
-                    }.bind(this));
+                    success(msg);
+                }.bind(this))
+                .fail(function(  jqXHR, textStatus, errorThrown ) {
+                    errors("Notificare: Failed to add tags to device");
+                }.bind(this));
             } else {
                 errors("Notificare: Calling addTags before registering a deviceId");
             }
@@ -1080,11 +1603,11 @@
                     contentType: "application/json; charset=utf-8",
                     dataType: "json"
                 }).done(function( msg ) {
-                        success(msg);
-                    }.bind(this))
-                    .fail(function( msg ) {
-                        errors(null);
-                    }.bind(this));
+                    success(msg);
+                }.bind(this))
+                .fail(function(  jqXHR, textStatus, errorThrown ) {
+                    errors(null);
+                }.bind(this));
             } else {
                 errors("Notificare: Calling removeTag before registering a deviceId");
             }
@@ -1107,11 +1630,11 @@
                     contentType: "application/json; charset=utf-8",
                     dataType: "json"
                 }).done(function( msg ) {
-                        success(msg);
-                    }.bind(this))
-                    .fail(function( msg ) {
-                        errors("Failed to clear device tags.");
-                    }.bind(this));
+                    success(msg);
+                }.bind(this))
+                .fail(function(  jqXHR, textStatus, errorThrown ) {
+                    errors("Failed to clear device tags.");
+                }.bind(this));
             } else {
                 errors("Notificare: Calling clearTags before registering a deviceId");
             }
@@ -1256,7 +1779,6 @@
                 errors("Notificare: Calling clear dnd before registering a deviceId");
             }
         },
-
         /**
          * Start Location Updates
          */
@@ -1365,22 +1887,22 @@
                 contentType: "application/json; charset=utf-8",
                 dataType: "json"
             }).done(function( msg ) {
-                    localStorage.setItem("position", JSON.stringify({
-                        accuracy: (!isNaN(position.coords.accuracy)) ? position.coords.accuracy : null,
-                        altitude: (!isNaN(position.coords.altitude)) ? position.coords.altitude : null,
-                        altitudeAccuracy: (!isNaN(position.coords.altitudeAccuracy)) ? position.coords.altitudeAccuracy : null,
-                        heading: (!isNaN(position.coords.heading)) ? position.coords.heading : null,
-                        speed: (!isNaN(position.coords.speed)) ? position.coords.speed : null,
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude,
-                        country: country,
-                        timestamp: position.timestamp
-                    }));
-                    success(JSON.parse(localStorage.getItem("position")));
-                }.bind(this))
-                .fail(function( msg ) {
-                    errors(null);
-                }.bind(this));
+                localStorage.setItem("position", JSON.stringify({
+                    accuracy: (!isNaN(position.coords.accuracy)) ? position.coords.accuracy : null,
+                    altitude: (!isNaN(position.coords.altitude)) ? position.coords.altitude : null,
+                    altitudeAccuracy: (!isNaN(position.coords.altitudeAccuracy)) ? position.coords.altitudeAccuracy : null,
+                    heading: (!isNaN(position.coords.heading)) ? position.coords.heading : null,
+                    speed: (!isNaN(position.coords.speed)) ? position.coords.speed : null,
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    country: country,
+                    timestamp: position.timestamp
+                }));
+                success(JSON.parse(localStorage.getItem("position")));
+            }.bind(this))
+            .fail(function(  jqXHR, textStatus, errorThrown ) {
+                errors(null);
+            }.bind(this));
 
         },
 
@@ -1400,7 +1922,7 @@
                 }).done(function( msg ) {
                         success(msg.inboxItems);
                     }.bind(this))
-                    .fail(function( msg ) {
+                    .fail(function(  jqXHR, textStatus, errorThrown ) {
                         errors("Notificare: Failed to get the inbox");
                     }.bind(this));
             } else {
@@ -1414,9 +1936,9 @@
          */
         openInboxItem: function (inboxItem) {
 
-            this.openNotification({
-                id: inboxItem.notification
-            });
+           this.openNotification({
+               id: inboxItem.notification
+           });
 
         },
         /**
@@ -1454,12 +1976,12 @@
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this)
                 }).done(function( msg ) {
-                        this._refreshBadge();
-                        success(msg);
-                    }.bind(this))
-                    .fail(function( msg ) {
-                        errors("Notificare: Failed to clear the inbox");
-                    }.bind(this));
+                    this._refreshBadge();
+                    success(msg);
+                }.bind(this))
+                .fail(function(  jqXHR, textStatus, errorThrown ) {
+                    errors("Notificare: Failed to clear the inbox");
+                }.bind(this));
             } else {
                 errors('Notificare: Calling clearInbox before having a deviceId');
             }
@@ -1479,12 +2001,12 @@
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this)
                 }).done(function( msg ) {
-                        this._refreshBadge();
-                        success(msg);
-                    }.bind(this))
-                    .fail(function( msg ) {
-                        errors("Notificare: Failed to remove item from inbox");
-                    }.bind(this));
+                    this._refreshBadge();
+                    success(msg);
+                }.bind(this))
+                .fail(function(  jqXHR, textStatus, errorThrown ) {
+                    errors("Notificare: Failed to remove item from inbox");
+                }.bind(this));
             } else {
                 errors('Notificare: Calling removeFromInbox before having a deviceId');
             }
@@ -1507,12 +2029,12 @@
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this)
                 }).done(function( msg ) {
-                        localStorage.setItem("badge", msg.unread);
-                        $(this.element).trigger("notificare:didUpdateBadge", msg.unread);
-                    }.bind(this))
-                    .fail(function( msg ) {
-                        $(this.element).trigger("notificare:didUpdateBadge", localStorage.getItem("badge"));
-                    }.bind(this));
+                    localStorage.setItem("badge", msg.unread);
+                    $(this.element).trigger("notificare:didUpdateBadge", msg.unread);
+                }.bind(this))
+                .fail(function(  jqXHR, textStatus, errorThrown ) {
+                    $(this.element).trigger("notificare:didUpdateBadge", localStorage.getItem("badge"));
+                }.bind(this));
             } else {
                 errors('Notificare: Refreshing Badge before having a deviceId');
             }
@@ -1564,11 +2086,11 @@
                 }.bind(this),
                 data: null
             }).done(function( msg ) {
-                    success(msg.regions);
-                }.bind(this))
-                .fail(function( msg ) {
-                    errors('Notificare: Failed to retrieve nearest regions');
-                }.bind(this));
+                success(msg.regions);
+            }.bind(this))
+            .fail(function(  jqXHR, textStatus, errorThrown ) {
+                errors('Notificare: Failed to retrieve nearest regions');
+            }.bind(this));
 
         },
 
@@ -1618,32 +2140,32 @@
                 }
             }).done(function( msg ) {
 
-                    if(msg.status === 'OK' && msg.results && msg.results.length > 0){
+                if(msg.status === 'OK' && msg.results && msg.results.length > 0){
 
-                        var country;
+                    var country;
 
-                        for (i=0; i< msg.results[0].address_components.length; i++){
-                            for (j=0; j< msg.results[0].address_components[i].types.length; j++){
-                                if(msg.results[0].address_components[i].types[j] == "country")
-                                    country = msg.results[0].address_components[i].short_name;
-                            }
+                    for (i=0; i< msg.results[0].address_components.length; i++){
+                        for (j=0; j< msg.results[0].address_components[i].types.length; j++){
+                            if(msg.results[0].address_components[i].types[j] == "country")
+                                country = msg.results[0].address_components[i].short_name;
                         }
-
-                        callback({
-                            country: country
-                        });
-                    } else {
-                        callback({
-                            country: null
-                        });
                     }
 
-                }.bind(this))
-                .fail(function( msg ) {
+                    callback({
+                        country: country
+                    });
+                } else {
                     callback({
                         country: null
                     });
-                }.bind(this));
+                }
+
+            }.bind(this))
+            .fail(function(  jqXHR, textStatus, errorThrown ) {
+                callback({
+                    country: null
+                });
+            }.bind(this));
 
         },
         /**
@@ -1651,7 +2173,7 @@
          * @param notification
          * @param data
          */
-        reply: function (notification, data, success, errors) {
+        reply: function (notification, label, data, success, errors) {
 
             if (this._getCookie('uuid')) {
                 $.ajax({
@@ -1664,16 +2186,17 @@
                         userID: this.options.userId,
                         deviceID: this._getCookie('uuid'),
                         notification: notification,
-                        data: data
+                        data: data,
+                        label: label
                     }),
                     contentType: "application/json; charset=utf-8",
                     dataType: "json"
                 }).done(function (msg) {
-                        success(msg);
-                    }.bind(this))
-                    .fail(function (msg) {
-                        errors('Notificare: Failed to register reply');
-                    }.bind(this));
+                    success(msg);
+                }.bind(this))
+                .fail(function(  jqXHR, textStatus, errorThrown ) {
+                    errors('Notificare: Failed to register reply');
+                }.bind(this));
             } else {
                 errors("Notificare: Calling reply before registering a deviceId");
             }
@@ -1694,23 +2217,23 @@
                     }.bind(this)
                 }).done(function( msg ) {
 
-                        var assets = [];
+                    var assets = [];
 
-                        $.each( msg.assets, function( index, asset ){
-                            assets.push({
-                                title: asset.title,
-                                description: asset.description,
-                                url: 'https://push.notifica.re/asset/file/' + asset.key,
-                                metaData: asset.metaData,
-                                button: asset.button
-                            });
-                        }.bind(this));
+                    $.each( msg.assets, function( index, asset ){
+                        assets.push({
+                            title: asset.title,
+                            description: asset.description,
+                            url: 'https://push.notifica.re/asset/file/' + asset.key,
+                            metaData: asset.metaData,
+                            button: asset.button
+                        });
+                    }.bind(this));
 
-                        success(assets);
-                    }.bind(this))
-                    .fail(function( msg ) {
-                        errors("Notificare: Failed to get assets for this group");
-                    }.bind(this))
+                    success(assets);
+                }.bind(this))
+                .fail(function(  jqXHR, textStatus, errorThrown ) {
+                    errors("Notificare: Failed to get assets for this group");
+                }.bind(this))
             } else {
                 errors("Notificare: This is a add-on service, please activate in order to use this method");
             }
@@ -1734,7 +2257,7 @@
                 }).done(function( msg ) {
                         success(msg.pass);
                     }.bind(this))
-                    .fail(function( msg ) {
+                    .fail(function(  jqXHR, textStatus, errorThrown ) {
                         errors("Notificare: Failed to get pass for this serial");
                     }.bind(this))
             } else {
@@ -1758,11 +2281,11 @@
                 contentType: "application/json; charset=utf-8",
                 dataType: "json"
             }).done(function (msg) {
-                    success(msg);
-                }.bind(this))
-                .fail(function (msg) {
-                    errors('Notificare: Failed to trigger region');
-                }.bind(this));
+                success(msg);
+            }.bind(this))
+            .fail(function(  jqXHR, textStatus, errorThrown ) {
+                errors('Notificare: Failed to trigger region');
+            }.bind(this));
 
         }
     };

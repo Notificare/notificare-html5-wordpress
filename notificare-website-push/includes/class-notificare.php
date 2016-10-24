@@ -329,7 +329,7 @@ class Notificare {
             }
 
             if ( isset( $_REQUEST['applicationsounddir'] ) ) {
-                $soundsDir = sanitize_text_field( $_REQUEST['applicationversion'] );
+                $soundsDir = sanitize_text_field( $_REQUEST['applicationsounddir'] );
                 update_option( 'notificare_soundsDir', $soundsDir );
             }
 
