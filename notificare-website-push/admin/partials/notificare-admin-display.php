@@ -35,7 +35,7 @@
             </div>
             <div class="field">
                 <label for="applicationallowsilent" class="checkboxes">
-                    <input name="applicationallowsilent" type="checkbox" id="applicationallowsilent" value="1" <?php if ( get_option( 'notificare_allowSilent') == '1' ) { ?> checked="checked" <?php } ?> />
+                    <input name="applicationallowsilent" type="checkbox" id="applicationallowsilent" value="1" <?php checked('1', get_option('notificare_allowSilent'));?> />
                     <?php _e( 'Allow Silent Push', Notificare::PLUGIN_NAME  ) ?>
                 </label>
             </div>
@@ -63,6 +63,13 @@
             </div>
             <h3><?php _e( 'GCM', Notificare::PLUGIN_NAME ) ?></h3>
             <div class="field">
+                <label for="applicationoverridemanifest" class="checkboxes">
+                    <input name="applicationoverridemanifest" type="checkbox" id="applicationoverridemanifest" value="1" <?php checked('1', get_option('notificare_overrideManifest'));?> />
+                    <?php _e( 'Override manifest.json', Notificare::PLUGIN_NAME  ) ?>
+                </label>
+                <div class="description"><?php printf( __( 'If not overridden, you must provide a manifest file yourself. Read more about manifest files ', Notificare::PLUGIN_NAME ) ); ?> <a href="https://developer.mozilla.org/en-US/docs/Web/Manifest" target="_blank"><?php printf( __( 'here', Notificare::PLUGIN_NAME ) ); ?></a>.</div>
+            </div>
+            <div class="field">
                 <label for="applicationgcmsender"><?php _e( 'GCM Sender ID', Notificare::PLUGIN_NAME ) ?></label>
                 <input name="applicationgcmsender" type="text" id="applicationgcmsender" value="<?php echo esc_html( get_option( 'notificare_gcmSender' ) ); ?>" class="regular-text" />
             </div>
@@ -73,7 +80,7 @@
             </div>
             <div class="field">
                 <label for="applicationgeolocationaccuracy" class="checkboxes">
-                    <input name="applicationgeolocationaccuracy" type="checkbox" id="applicationgeolocationaccuracy" value="1" <?php if ( get_option( 'notificare_geolocationOptionsEnableHighAccuracy' ) == '1' ) { ?> checked="checked" <?php } ?> />
+                    <input name="applicationgeolocationaccuracy" type="checkbox" id="applicationgeolocationaccuracy" value="1" <?php checked('1', get_option('notificare_geolocationOptionsEnableHighAccuracy'));?> />
                     <?php _e( 'Enable High Accuracy', Notificare::PLUGIN_NAME ) ?>
                 </label>
             </div>

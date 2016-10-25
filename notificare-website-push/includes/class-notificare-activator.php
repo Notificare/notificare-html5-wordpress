@@ -37,6 +37,7 @@ class Notificare_Activator {
 		add_option( 'notificare_applicationSecret' );
 		add_option( 'notificare_applicationVersion' );
 		add_option( 'notificare_allowSilent', '0' );
+		add_option( 'notificare_overrideManifest', '1' );
 		add_option( 'notificare_soundsDir' );
 		add_option( 'notificare_serviceWorker' );
 		add_option( 'notificare_serviceWorkerScope' );

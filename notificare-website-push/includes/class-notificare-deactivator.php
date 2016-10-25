@@ -37,6 +37,7 @@ class Notificare_Deactivator {
         delete_option( 'notificare_applicationSecret' );
         delete_option( 'notificare_applicationVersion' );
         delete_option( 'notificare_allowSilent' );
+        delete_option( 'notificare_overrideManifest' );
         delete_option( 'notificare_soundsDir' );
         delete_option( 'notificare_serviceWorker' );
         delete_option( 'notificare_serviceWorkerScope' );

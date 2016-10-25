@@ -77,7 +77,7 @@ msgstr "Ficheiro Service Worker"
 
 #: admin/partials/notificare-admin-display.php:61
 msgid "Service Worker Scope"
-msgstr "Objectivo do Service Worker"
+msgstr "Diretório do Service Worker"
 
 #: admin/partials/notificare-admin-display.php:64
 msgid "GCM"
@@ -86,6 +86,14 @@ msgstr "GCM"
 #: admin/partials/notificare-admin-display.php:66
 msgid "GCM Sender ID"
 msgstr "GCM Sender ID"
+
+#: admin/partials/notificare-admin-display.php:68
+msgid "Substituir o manifest.json"
+msgstr ""
+
+#: admin/partials/notificare-admin-display.php:73
+msgid "If not overridden, you must provide a manifest file yourself. Read more about manifest files <a href=\"%s\">here</a>."
+msgstr "Se não substituir o ficheiro manifest.json, terá que fornecer um você mesmo. Leia mais acerca de manifestos para a web, <a href=\"%s\">aqui</a>."
 
 #: admin/partials/notificare-admin-display.php:69
 msgid "Geolocation Options"

@@ -324,9 +324,11 @@ class Notificare {
                 update_option( 'notificare_gcmSender', $_REQUEST['applicationgcmsender'] );
             }
 
-            if ( isset( $_REQUEST['applicationallowsilent'] ) && is_numeric( $_REQUEST['applicationallowsilent'] ) ) {
-                update_option( 'notificare_allowSilent', $_REQUEST['applicationallowsilent'] );
-            }
+            $applicationallowsilent = $_REQUEST['applicationallowsilent'] ? $_REQUEST['applicationallowsilent'] : '';
+            update_option('notificare_allowSilent', esc_html($applicationallowsilent));
+
+            $applicationoverridemanifest = $_REQUEST['applicationoverridemanifest'] ? $_REQUEST['applicationoverridemanifest'] : '';
+            update_option('notificare_overrideManifest', esc_html($applicationoverridemanifest));
 
             if ( isset( $_REQUEST['applicationsounddir'] ) ) {
                 $soundsDir = sanitize_text_field( $_REQUEST['applicationsounddir'] );
@@ -347,9 +349,9 @@ class Notificare {
                 update_option( 'notificare_geolocationOptionsTimeout', $_REQUEST['applicationgeolocationtimeout'] );
             }
 
-            if ( isset( $_REQUEST['applicationgeolocationaccuracy'] ) && is_numeric( $_REQUEST['applicationgeolocationaccuracy'] ) ) {
-                update_option( 'notificare_geolocationOptionsEnableHighAccuracy', $_REQUEST['applicationgeolocationaccuracy'] );
-            }
+            $applicationgeolocationaccuracy = $_REQUEST['applicationgeolocationaccuracy'] ? $_REQUEST['applicationgeolocationaccuracy'] : '';
+            update_option('notificare_geolocationOptionsEnableHighAccuracy', esc_html($applicationgeolocationaccuracy));
+
 
             if ( isset( $_REQUEST['applicationgeolocationage'] ) && is_numeric( $_REQUEST['applicationgeolocationage'] ) ) {
                 update_option( 'notificare_geolocationOptionsMaximumAge', $_REQUEST['applicationgeolocationage'] );
@@ -370,7 +372,9 @@ class Notificare {
     }
 
     public function addRelManifest() {
-    	echo '<link rel="manifest" href="' . plugin_dir_url( __FILE__ ) . 'manifest.json.php?gcmSender=' . get_option('notificare_gcmSender') .'&app=' . get_option('notificare_applicationName') .'" />';
+        if ( get_option('notificare_overrideManifest') ) {
+        	echo '<link rel="manifest" href="' . plugin_dir_url( __FILE__ ) . 'manifest.json.php?gcmSender=' . get_option('notificare_gcmSender') .'&app=' . get_option('notificare_applicationName') .'" />';
+        }
     }
 
     public function addConfig() {

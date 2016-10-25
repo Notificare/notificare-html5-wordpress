@@ -87,6 +87,16 @@ msgstr "GCM"
 msgid "GCM Sender ID"
 msgstr "GCM Sender ID"
 
+
+#: admin/partials/notificare-admin-display.php:68
+msgid "Genereer manifest.json"
+msgstr ""
+
+#: admin/partials/notificare-admin-display.php:73
+msgid "If not overridden, you must provide a manifest file yourself. Read more about manifest files <a href=\"%s\">here</a>."
+msgstr "Indien niet gegenereerd, dient u zelf een manifest bestand te plaatsen. Lees <a href=\"%s\">hier</a> meer over manifest bestanden."
+
+
 #: admin/partials/notificare-admin-display.php:69
 msgid "Geolocation Options"
 msgstr "Geolocatie opties"
