@@ -34,12 +34,6 @@
                 <input name="applicationversion" type="text" id="applicationversion" value="<?php echo esc_html( get_option( 'notificare_applicationVersion' ) ); ?>" class="regular-text" />
             </div>
             <div class="field">
-                <label for="applicationallowsilent" class="checkboxes">
-                    <input name="applicationallowsilent" type="checkbox" id="applicationallowsilent" value="1" <?php checked('1', get_option('notificare_allowSilent'));?> />
-                    <?php _e( 'Allow Silent Push', Notificare::PLUGIN_NAME  ) ?>
-                </label>
-            </div>
-            <div class="field">
                 <label for="applicationsounddir"><?php _e( 'Sounds Directory', Notificare::PLUGIN_NAME ) ?></label>
                 <input name="applicationsounddir" type="text" id="applicationsounddir" value="<?php echo esc_html( get_option( 'notificare_soundsDir' ) ); ?>" class="regular-text" />
             </div>

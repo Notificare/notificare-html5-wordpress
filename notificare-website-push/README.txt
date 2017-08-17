@@ -46,7 +46,7 @@ No. But it is recommended. Our Premium Support plans allow you to contact our en
 
 = Which browsers support your notifications? =
 
-All the major browsers out there support our Website Push functionality. In Chrome, Firefox and Safari we use native notifications functionality, when this is not available we will fall back to WebSockets.
+All the major browsers out there support our Website Push functionality. Last versions of Chrome, Firefox, Opera and Safari support native notifications. All these combined make up for more than 85% of market share.
 
 
 == Screenshots ==
@@ -56,6 +56,9 @@ All the major browsers out there support our Website Push functionality. In Chro
 3. Automated RSS Push Notifications
 
 == Upgrade Notice ==
+= 1.6.0 =
+* Updated to latest 1.9.6 SDK
+* Removed allow silent property
 = 1.5.0 =
 * Updated to latest 1.9.3 SDK
 * Minor bug fixes

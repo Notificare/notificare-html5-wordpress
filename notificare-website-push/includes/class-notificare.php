@@ -324,9 +324,6 @@ class Notificare {
                 update_option( 'notificare_gcmSender', $_REQUEST['applicationgcmsender'] );
             }
 
-            $applicationallowsilent = $_REQUEST['applicationallowsilent'] ? $_REQUEST['applicationallowsilent'] : '';
-            update_option('notificare_allowSilent', esc_html($applicationallowsilent));
-
             $applicationoverridemanifest = $_REQUEST['applicationoverridemanifest'] ? $_REQUEST['applicationoverridemanifest'] : '';
             update_option('notificare_overrideManifest', esc_html($applicationoverridemanifest));
 

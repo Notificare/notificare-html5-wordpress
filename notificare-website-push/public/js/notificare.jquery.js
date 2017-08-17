@@ -1,5 +1,5 @@
 /*
- *  Notificare JS for jQuery - v1.9.0
+ *  Notificare JS for jQuery - v1.9.4
  *  jQuery Library for Notificare
  *  http://notifica.re
  *
@@ -12,11 +12,8 @@
     // Create the defaults once
     var pluginName = "notificare",
         defaults = {
-            sdkVersion: '1.9.3',
-            websitePushUrl: "https://push.notifica.re/website-push/safari",
+            sdkVersion: '1.9.6',
             fullHost: window.location.protocol + '//' +  window.location.host,
-            wssUrl: "wss://websocket.notifica.re",
-            protocols: ['notificare-push'],
             daysToExpire: '30',
             clientInfo: new UAParser(),
             userId: null,
@@ -32,7 +29,7 @@
 
     Plugin.prototype = {
         /**
-         *
+         * Init the lib
          */
         init: function () {
 
@@ -40,12 +37,11 @@
             this.placeholder.addClass('notificare');
             this.uniqueId = this._getUniqueID();
             this.sessionDate = new Date();
-            this.reconnectTimeout = 0;
-            this.minReconnectTimeout = 1000;
-            this.maxReconnectTimeout = 60000;
             this.allowedNotifications = false;
             this.safariPush = false;
-            this.chromePush = false;
+            this.webPush = false;
+            this.serviceWorkerRegistration = null;
+            this.navigatorWatchPosition = null;
 
             //Initial set of regions, location and badge
             if(typeof(Storage) !== "undefined") {
@@ -56,7 +52,7 @@
                 if(!localStorage.getItem("position")){
                     localStorage.setItem("position", JSON.stringify({
                         latitude: 0.0,
-                        longitude: 0.0,
+                        longitude: 0.0
                     }));
                 }
 
@@ -66,34 +62,46 @@
             }
 
             if (typeof NOTIFICARE_PLUGIN_OPTIONS  !== 'undefined') {
-                this.options = $.extend( {}, defaults, NOTIFICARE_PLUGIN_OPTIONS );
+                this.options = $.extend( {}, this.options, NOTIFICARE_PLUGIN_OPTIONS );
                 if(this.options.useTestEnv){
                     this.options.apiUrl = "https://cloud-test.notifica.re/api";
                     this.options.awsStorage = "https://push-test.notifica.re/upload";
+                    this.options.websitePushUrl = "https://push-test.notifica.re/website-push/safari";
+                    this.options.assetsUrl = 'https://push-test.notifica.re/asset/file/';
                 } else {
                     this.options.apiUrl = "https://cloud.notifica.re/api";
                     this.options.awsStorage = "https://push.notifica.re/upload";
+                    this.options.websitePushUrl = "https://push.notifica.re/website-push/safari";
+                    this.options.assetsUrl = 'https://push.notifica.re/asset/file/';
                 }
                 this._getApplicationInfo();
             } else {
                 this._initWithConfig(function(options){
-                    this.options = $.extend( {}, defaults, options );
+                    this.options = $.extend( {}, this.options, options );
                     if(this.options.useTestEnv){
                         this.options.apiUrl = "https://cloud-test.notifica.re/api";
                         this.options.awsStorage = "https://push-test.notifica.re/upload";
+                        this.options.websitePushUrl = "https://push-test.notifica.re/website-push/safari";
+                        this.options.assetsUrl = 'https://push-test.notifica.re/asset/file/';
                     } else {
                         this.options.apiUrl = "https://cloud.notifica.re/api";
                         this.options.awsStorage = "https://push.notifica.re/upload";
+                        this.options.websitePushUrl = "https://push.notifica.re/website-push/safari";
+                        this.options.assetsUrl = 'https://push.notifica.re/asset/file/';
                     }
                     this._getApplicationInfo();
 
                 }.bind(this), function(errors){
-                    console.warn('Notificare: Please make sure you have a config.json file in the root of your webapp');
+                    this.log('Notificare: Please make sure you have a config.json file in the root of your webapp');
                 }.bind(this));
             }
 
         },
 
+        /**
+         * Handle window focus and blur to log open/close events
+         * @private
+         */
         _handleSession: function(){
             $(window).bind("focus",function(event){
 
@@ -125,13 +133,31 @@
                         length: seconds
                     }
                 }, function(data){
-                    console.log("Notificare: Session:" + seconds + " seconds");
-                }, function(error){
+                    this.log("Notificare: Session:" + seconds + " seconds");
+                }.bind(this), function(error){
 
                 });
             }.bind(this));
         },
 
+        /**
+         * Query Navigator Permissions
+         * @param permission
+         * @param success
+         * @param error
+         */
+        queryNavigatorPermissions: function(permission, success, error){
+            navigator.permissions.query({name: permission}).then(function(result) {
+                if (result.state === 'granted') {
+                    success(result);
+                } else {
+                    error(result);
+                }
+            });
+        },
+        /**
+         * Register for Notifications, triggered by the developer
+         */
         registerForNotifications: function(){
 
             var isServiceWorkerCapable = false;
@@ -179,199 +205,160 @@
 
                         }.bind(this));
                     } else if (data.permission == 'denied') {
-                        if(this.options.allowSilent){
-                            this._setSocket();
-                        }
+                        $(this.element).trigger("notificare:didFailToReceiveDeviceToken", data);
                     } else if (data.permission == 'granted') {
                         this.allowedNotifications = true;
                         this.safariPush = true;
                         $(this.element).trigger("notificare:didReceiveDeviceToken", data.deviceToken);
                     }
 
-                } else if (navigator.userAgent.toLowerCase().indexOf('chrome') > -1 &&
-                    'serviceWorker' in navigator &&
+                } else if ('serviceWorker' in navigator &&
                     'showNotification' in ServiceWorkerRegistration.prototype &&
-                    'PushManager' in window &&
-                    isServiceWorkerCapable &&
-                    this.options.serviceWorker &&
-                    this.options.serviceWorkerScope) {
+                    'PushManager' in window) {
 
-                    navigator.serviceWorker.register(this.options.serviceWorker, {
-                        scope: this.options.serviceWorkerScope
-                    }).then(function() {
+                    if (this.applicationInfo.websitePushConfig &&
+                        this.applicationInfo.websitePushConfig.gcmApiKey &&
+                        this.applicationInfo.websitePushConfig.vapid &&
+                        this.applicationInfo.websitePushConfig.vapid.publicKey &&
+                        this.options.serviceWorker &&
+                        this.options.serviceWorkerScope) {
 
-                        //Worker is ready let's handle messages from it
-                        navigator.serviceWorker.onmessage = function(msg){
 
-                            if (msg && msg.data) {
-                                var data = JSON.parse(msg.data);
-                                switch(data.cmd) {
-                                    case 'notificationclick':
-                                        this._handleClickOnChromeNotification(data.message);
-                                        break;
-                                    case 'notificationreceive':
-                                        this._getChromeNotification(data.message);
-                                        break;
-                                    case 'notificationreply':
-                                        this._handleActionClickOnChromeNotification(data.message, data.action);
-                                        break;
-                                    case 'activate':
-                                        this._sendMessage({
-                                            action: "init",
-                                            options: this.options
-                                        });
-                                        break;
-                                    default:
-                                        break;
-                                }
-                            }
+                        if (isServiceWorkerCapable) {
 
-                        }.bind(this);
+                            navigator.serviceWorker.register(this.options.serviceWorker, {
+                                scope: this.options.serviceWorkerScope
+                            }).then(function() {
 
-                        navigator.serviceWorker.ready.then(function(serviceWorkerRegistration){
+                                //Worker is ready let's handle messages from it
+                                navigator.serviceWorker.onmessage = function(msg){
 
-                            // Are Notifications supported in the service worker?
-                            serviceWorkerRegistration.pushManager.getSubscription().then(function(subscription) {
-                                // Enable any UI which subscribes / unsubscribes from
-                                // push messages.
-                                if (!subscription) {
-                                    // subscribe for push notifications
-                                    serviceWorkerRegistration.pushManager.subscribe({
-                                        name: 'push',
-                                        userVisibleOnly: true
-                                    }).then(function(subscription) {
-                                        // The subscription was successful
-                                        pushToken = this._getPushToken(subscription);
-                                        this.allowedNotifications = true;
-                                        this.chromePush = true;
-                                        $(this.element).trigger("notificare:didReceiveDeviceToken", pushToken);
-
-                                        //It's the first time, let's create an install event
-                                        this.logEvent({
-                                            sessionID: this.uniqueId,
-                                            type: 're.notifica.event.application.Install'
-                                        },  function(data){
-
-                                        }, function(error){
-
-                                        });
-
-                                    }.bind(this)).catch(function(e) {
-                                        if (Notification.permission === 'denied') {
-                                            if(this.options.allowSilent){
-                                                this._setSocket();
-                                            }
-                                        } else {
-                                            setTimeout(function() {
-                                                this.registerForNotifications();
-                                            }.bind(this), 2000);
+                                    if (msg && msg.data) {
+                                        var data = JSON.parse(msg.data);
+                                        switch(data.cmd) {
+                                            case 'notificationclick':
+                                                this._handleClickOnWebPushNotification(data.message);
+                                                break;
+                                            case 'notificationreceive':
+                                                this._getNotification(data.message);
+                                                break;
+                                            case 'notificationreply':
+                                                this._handleActionClickOnWebPushNotification(data.message, data.action);
+                                                break;
+                                            case 'system':
+                                                $(this.element).trigger("notificare:didReceiveSystemNotification", data);
+                                                break;
+                                            case 'activate':
+                                                this._sendMessage({
+                                                    action: "init",
+                                                    options: this.options
+                                                });
+                                                break;
+                                            case 'pushsubscriptionchange':
+                                                //@TODO: register the device whenever this is triggered, this is not yet reliably supported by all browsers
+                                                break;
+                                            default:
+                                                break;
                                         }
+                                    }
+
+                                }.bind(this);
+
+                                navigator.serviceWorker.ready.then(function(serviceWorkerRegistration){
+
+                                    this.serviceWorkerRegistration = serviceWorkerRegistration;
+                                    // Are Notifications supported in the service worker?
+                                    serviceWorkerRegistration.pushManager.getSubscription().then(function(subscription) {
+                                        // Enable any UI which subscribes / unsubscribes from
+                                        // push messages.
+                                        if (!subscription || !subscription.options || !subscription.options.applicationServerKey || this._arrayBufferToBase64Url(subscription.options.applicationServerKey) !== this.applicationInfo.websitePushConfig.vapid.publicKey) {
+                                            // subscribe for push notifications
+                                            var subscriptionOptions = {
+                                                name: 'push',
+                                                userVisibleOnly: true
+                                            };
+                                            if (this.applicationInfo.websitePushConfig.vapid.publicKey) {
+                                                subscriptionOptions.applicationServerKey = this._base64UrlToUint8Array(this.applicationInfo.websitePushConfig.vapid.publicKey);
+                                            }
+                                            serviceWorkerRegistration.pushManager.subscribe(subscriptionOptions).then(function(subscription) {
+                                                // The subscription was successful
+                                                this.allowedNotifications = true;
+                                                this.webPush = true;
+                                                // Send push keys along with event
+                                                $(this.element).trigger("notificare:didReceiveDeviceToken", this._getPushToken(subscription));
+
+                                                //It's the first time, let's create an install event
+                                                this.logEvent({
+                                                    sessionID: this.uniqueId,
+                                                    type: 're.notifica.event.application.Install'
+                                                },  function(data){
+
+                                                }, function(error){
+
+                                                });
+
+                                            }.bind(this)).catch(function(e) {
+                                                $(this.element).trigger("notificare:didFailToReceiveDeviceToken", e);
+                                                if (Notification.permission === 'denied') {
+                                                    //Do nothing
+                                                } else if (this._arrayBufferToBase64Url(subscription.options.applicationServerKey) != this.applicationInfo.websitePushConfig.vapid.publicKey) {
+                                                    //Unsubscribe and subscribe again
+
+                                                    this.serviceWorkerRegistration.pushManager.getSubscription()
+                                                        .then(function(subscription) {
+                                                            if (subscription) {
+                                                                return subscription.unsubscribe();
+                                                            }
+                                                        })
+                                                        .catch(function(error) {
+                                                            this.log('Notificare: Error unsubscribing service worker registration', error);
+                                                        }.bind(this))
+                                                        .then(function() {
+                                                            $(this.element).trigger("notificare:didUnsubscribeForNotifications", "Notificare: Did unsubscribe and subscribe again due to mismatch in application server keys.");
+                                                            this.registerForNotifications();
+                                                        }.bind(this));
+                                                } else {
+                                                    setTimeout(function() {
+                                                        this.registerForNotifications();
+                                                    }.bind(this), 2000);
+                                                }
+                                            }.bind(this));
+                                        } else {
+                                            this.allowedNotifications = true;
+                                            this.webPush = true;
+                                            $(this.element).trigger("notificare:didReceiveDeviceToken", this._getPushToken(subscription));
+                                        }
+                                    }.bind(this)).catch(function(err) {
+                                        $(this.element).trigger("notificare:didFailToReceiveDeviceToken", err);
+                                        //Let's try again
+                                        setTimeout(function() {
+                                            this.registerForNotifications();
+                                        }.bind(this), 2000);
                                     }.bind(this));
-                                    return;
-                                }
-                                var pushToken = this._getPushToken(subscription);
-                                this.allowedNotifications = true;
-                                this.chromePush = true;
-                                $(this.element).trigger("notificare:didReceiveDeviceToken", pushToken);
+                                }.bind(this));
 
                             }.bind(this)).catch(function(err) {
-                                //Let's try again
+                                $(this.element).trigger("notificare:didFailToReceiveDeviceToken", err);
                                 setTimeout(function() {
                                     this.registerForNotifications();
                                 }.bind(this), 2000);
                             }.bind(this));
-                        }.bind(this));
 
-                    }.bind(this)).catch(function(err) {
-                        setTimeout(function() {
-                            this.registerForNotifications();
-                        }.bind(this), 2000);
-                    }.bind(this));
+
+                        } else {
+                            $(this.element).trigger("notificare:didFailToReceiveDeviceToken", "Notificare: Service workers are only available over HTTPS or using localhost.");
+                        }
+
+                    } else {
+                        $(this.element).trigger("notificare:didFailToReceiveDeviceToken", "Notificare: Please check your Website Push configurations in our dashboard before proceed. Missing a GCM/FCM Server Key, VAPID or incorrect path and scope to the service worker in config.json.");
+                    }
 
                 } else {
-
-                    //Continue with Websockets
-
-                    //Modern browsers using window.Notification
-                    if (window.Notification) {
-
-                        if (Notification.permission === 'default') {
-
-                            Notification.requestPermission(function () {
-                                this.allowedNotifications = true;
-                                this._setSocket();
-                            }.bind(this));
-
-
-                        } else if (Notification.permission === 'granted') {
-                            this.allowedNotifications = true;
-                            this._setSocket();
-                        } else if (Notification.permission === 'denied') {
-                            if(this.options.allowSilent){
-                                this._setSocket();
-                            }
-                        } else {
-                            if(this.options.allowSilent){
-                                this._setSocket();
-                            }
-                        }
-
-                        //Legacy webkit browsers
-                    } else if (window.webkitNotifications) {
-
-                        if (window.webkitNotifications.checkPermission() == 0) {
-                            this.allowedNotifications = true;
-                            this._setSocket();
-                        } else {
-                            window.webkitNotifications.requestPermission(function(e){
-
-                                if(window.webkitNotifications.checkPermission() == 1){
-                                    if(this.options.allowSilent){
-                                        this._setSocket();
-                                    }
-                                } else if(window.webkitNotifications.checkPermission() == 2){
-                                    if(this.options.allowSilent){
-                                        this._setSocket();
-                                    }
-                                } else {
-                                    this.allowedNotifications = true;
-                                    this._setSocket();
-                                }
-
-                            }.bind(this));
-                        }
-
-                        //Legacy mozilla browsers
-                    } else if (navigator.mozNotification) {
-
-                        if (navigator.mozNotification.checkPermission() == 0) {
-                            this.allowedNotifications = true;
-                            this._setSocket();
-                        }else{
-                            navigator.mozNotification.requestPermission(function(e){
-                                if(navigator.mozNotification.checkPermission() == 1){
-                                    if(this.options.allowSilent){
-                                        this._setSocket();
-                                    }
-                                } else if(navigator.mozNotification.checkPermission() == 2){
-                                    if(this.options.allowSilent){
-                                        this._setSocket();
-                                    }
-                                } else {
-                                    this.allowedNotifications = true;
-                                    this._setSocket();
-                                }
-                            }.bind(this));
-                        }
-                    } else {
-                        if(this.options.allowSilent){
-                            this._setSocket();
-                        }
-                    }
+                    $(this.element).trigger("notificare:didFailToReceiveDeviceToken", "Notificare: Your browser does not support Service Workers nor Safari Website Push.");
                 }
 
             } else {
-                this.log("Notificare: Please check your Website Push configurations in our dashboard before proceed");
+                $(this.element).trigger("notificare:didFailToReceiveDeviceToken", "Notificare: Please check your Website Push configurations in our dashboard before proceed. Missing the App Icon and Allowed Domains.");
             }
 
         },
@@ -449,89 +436,82 @@
             }
             return cookie;
         },
+
         /**
-         * Reconnect Websockets
+         * Retrieve a Push Token
+         * @param pushSubscription
+         * @returns {{endpoint: *, keys: (*|{p256dh, auth})}}
          * @private
          */
-        _reconnect: function() {
-            this.reconnectTimeout = this.reconnectTimeout * 2;
-            if (this.reconnectTimeout < this.minReconnectTimeout) {
-                this.reconnectTimeout = this.minReconnectTimeout;
-            } else if (this.reconnectTimeout > this.maxReconnectTimeout) {
-                this.reconnectTimeout = this.maxReconnectTimeout;
+        _getPushToken: function(pushSubscription) {
+            return {
+                endpoint: pushSubscription.endpoint,
+                keys: this._getPushKeys(pushSubscription)
             }
-            this.log('Reconnection in ' + this.reconnectTimeout + ' milliseconds');
-
-            setTimeout(function() {
-                this._setSocket();
-            }.bind(this), this.reconnectTimeout);
         },
+
         /**
-         * Manage websockets connections
+         * Retrieve Push Keys
+         * @param pushSubscription
+         * @returns {*}
          * @private
          */
-        _setSocket: function () {
-
-            if ("WebSocket" in window){
-
-                var connection = new WebSocket( this.options.wssUrl, this.options.protocols );
-
-                //On OPEN
-                connection.onopen = function () {
-                    if(this._getCookie('uuid')){
-                        connection.send(JSON.stringify({"command":"register", "uuid" : this._getCookie('uuid')}));
-                    }else{
-                        this.logEvent({
-                            sessionID: this.uniqueId,
-                            type: 're.notifica.event.application.Install'
-                        },  function(data){
-
-                        }, function(error){
-
-                        });
-                        connection.send(JSON.stringify({"command":"register"}));
-                    }
-
-                }.bind(this);
-
-                //On MESSAGE
-                connection.onmessage = function (message) {
-                    if (message.data) {
-                        var data = JSON.parse(message.data);
-                        if (data.registration) {
-                            $(this.element).trigger("notificare:didReceiveDeviceToken", data.registration.uuid);
-                        } else if (data.notification) {
-                            this._refreshBadge();
-                            this._getNotification(data.notification);
-                        }
-                    }
-                }.bind(this);
-
-                //On ERROR
-                connection.onerror = function (e) {
-                    this._reconnect();
-                }.bind(this);
-
-                //On CLOSE
-                connection.onclose = function (e) {
-                    this._reconnect();
-                }.bind(this);
-
+        _getPushKeys: function(pushSubscription) {
+            if (pushSubscription && pushSubscription.getKey) {
+                var rawKey = pushSubscription.getKey('p256dh');
+                var rawAuthSecret = pushSubscription.getKey('auth');
+                if (rawKey && rawAuthSecret) {
+                    return {
+                        p256dh: this._arrayBufferToBase64(rawKey),
+                        auth: this._arrayBufferToBase64(rawAuthSecret)
+                    };
+                } else {
+                    return null;
+                }
             } else {
-                this.log('Notificare: Browser doesn\'t support websockets');
+                return null;
             }
-
         },
 
-        _getPushToken: function(pushSubscription){
-            var pushToken = '';
-            if (pushSubscription.subscriptionId) {
-                pushToken = pushSubscription.subscriptionId;
-            } else {
-                pushToken = pushSubscription.endpoint.split('/').pop();
+        /**
+         * Convert URL-safe base64
+         * @param base64UrlData
+         * @returns {Uint8Array}
+         */
+        _base64UrlToUint8Array: function(base64UrlData) {
+            var padding = '='.repeat((4 - base64UrlData.length % 4) % 4);
+            var base64 = (base64UrlData + padding).replace(/\-/g, '+').replace(/_/g, '/');
+
+            var rawData = window.atob(base64);
+            var buffer = new Uint8Array(rawData.length);
+
+            for (var i = 0; i < rawData.length; ++i) {
+                buffer[i] = rawData.charCodeAt(i);
             }
-            return pushToken;
+            return buffer;
         },
+
+        _arrayBufferToBase64: function(buffer) {
+            return this._uint8ArrayToBase64(new Uint8Array(buffer));
+        },
+
+        _arrayBufferToBase64Url: function(buffer) {
+            return this._uint8ArrayToBase64Url(new Uint8Array(buffer));
+        },
+
+        _uint8ArrayToBase64: function(bytes) {
+            var rawData = '';
+            const len = bytes.byteLength;
+            for (var i = 0; i < len; i++) {
+                rawData += String.fromCharCode(bytes[i]);
+            }
+            return window.btoa(rawData);
+        },
+
+        _uint8ArrayToBase64Url: function(bytes) {
+            return this._uint8ArrayToBase64(bytes).replace(/\//g, '_').replace(/\+/g, '-').replace(/=+$/g, '');
+        },
+
         /**
          * API Requests
          */
@@ -545,11 +525,9 @@
                 type: "GET",
                 url: '/config.json'
             }).done(function( msg ) {
-
                 success(msg);
-
             }.bind(this)).fail(function(  jqXHR, textStatus, errorThrown ) {
-                errors(msg);
+                errors(jqXHR);
             }.bind(this));
 
         },
@@ -570,15 +548,14 @@
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this)
                 }).done(function( msg ) {
+
                     this.applicationInfo = msg.application;
                     this.services = msg.application.services;
 
                     $(this.element).trigger("notificare:onReady", msg.application);
 
                     this._handleSession();
-
                     this._onURLLocationChanged();
-
 
                 }.bind(this)).fail(function(  jqXHR, textStatus, errorThrown ) {
 
@@ -595,13 +572,19 @@
 
             } else {
 
-                console.warn('Notificare: Please make sure you provide proper application keys');
+                this.log('Notificare: Please make sure you provide proper application keys');
 
             }
 
 
         },
 
+        /**
+         * Handle Messages to worker
+         * @param message
+         * @returns {Promise}
+         * @private
+         */
         _sendMessage: function(message) {
             // This wraps the message posting/response in a promise, which will resolve if the response doesn't
             // contain an error, and reject with the error if it does. If you'd prefer, it's possible to call
@@ -628,23 +611,32 @@
          *
          * Register Device
          * @param uuid
+         * @param keys
          */
-        registerDevice: function (uuid) {
+        registerDevice: function (pushToken) {
             var d = new Date();
 
-            var platform = this.options.clientInfo.getOS().name;
+            var platform = this.options.clientInfo.getBrowser().name;
+            var transport = "N/A";
+
             if(this.safariPush){
                 platform = 'Safari';
-            } else if(this.chromePush){
-                platform = 'Chrome';
+                transport = 'WebsitePush';
+            } else if(this.webPush){
+                transport = 'WebPush';
             }
 
-            var transport = 'Websocket';
-            if(this.safariPush){
-                transport = 'WebsitePush';
-            } else if(this.chromePush){
-                transport = 'GCM';
+            var uuid, keys;
+            if (pushToken.endpoint) {
+                uuid = pushToken.endpoint;
+                keys = pushToken.keys;
+            } else {
+                uuid = pushToken;
             }
+
+            var lang = window.navigator.userLanguage || window.navigator.language,
+                language = lang.split('-');
+
 
             $.ajax({
                 type: "POST",
@@ -653,17 +645,18 @@
                     xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                 }.bind(this),
                 data: JSON.stringify({
-                    auth_token: this.options.token,
                     deviceID : uuid,
                     oldDeviceID: (this._getCookie('uuid') && this._getCookie('uuid') != uuid) ? this._getCookie('uuid') : null,
+                    keys: keys,
                     userID : (this.options.userId) ? this.options.userId : null,
                     userName : (this.options.username) ? this.options.username : null,
                     platform : platform,
-                    osVersion : this.options.clientInfo.getOS().version,
+                    osString : this.options.clientInfo.getBrowser().name + ' ' + this.options.clientInfo.getBrowser().major,
+                    osVersion : this.options.clientInfo.getBrowser().major,
                     sdkVersion : this.options.sdkVersion,
                     appVersion : this.options.appVersion,
-                    language: window.navigator.userLanguage || window.navigator.language,
-                    deviceString : window.navigator.platform, //to get better
+                    language: language[0] || language,
+                    deviceString : this.options.clientInfo.getBrowser().name + ' ' + this.options.clientInfo.getBrowser().major + ' | ' + this.options.clientInfo.getOS().name + ' ' + this.options.clientInfo.getOS().version,
                     transport : transport,
                     timeZoneOffset : (d.getTimezoneOffset()/60) * -1
                 }),
@@ -685,77 +678,66 @@
         unregisterDevice: function (success, errors) {
 
             if (this._getCookie('uuid')) {
-                $.ajax({
-                    type: "DELETE",
-                    url: this.options.apiUrl + '/device/' + this._getCookie('uuid'),
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
-                    }.bind(this)
-                }).done(function( msg ) {
+
+                if(this.safariPush){
+
+                    $.ajax({
+                        type: "DELETE",
+                        url: this.options.apiUrl + '/device/' + encodeURIComponent(this._getCookie('uuid')),
+                        beforeSend: function (xhr) {
+                            xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
+                        }.bind(this)
+                    }).done(function( msg ) {
                         this._setCookie("");
                         localStorage.setItem("badge", 0);
                         $(this.element).trigger("notificare:didUpdateBadge", 0);
                         success(msg);
                     }.bind(this))
-                    .fail(function(  jqXHR, textStatus, errorThrown ) {
-                        errors("Notificare: Failed to delete a UUID");
-                    }.bind(this));
+                        .fail(function(  jqXHR, textStatus, errorThrown ) {
+                            errors("Notificare: Failed to delete a UUID");
+                        }.bind(this));
+
+
+                } else {
+
+                    this.serviceWorkerRegistration.pushManager.getSubscription()
+                        .then(function(subscription) {
+                            if (subscription) {
+                                return subscription.unsubscribe();
+                            }
+                        })
+                        .catch(function(error) {
+                            this.log('Notificare: Error unsubscribing service worker registration', error);
+                        }.bind(this))
+                        .then(function() {
+                            $.ajax({
+                                type: "DELETE",
+                                url: this.options.apiUrl + '/device/' + encodeURIComponent(this._getCookie('uuid')),
+                                beforeSend: function (xhr) {
+                                    xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
+                                }.bind(this)
+                            }).done(function( msg ) {
+                                this._setCookie("");
+                                localStorage.setItem("badge", 0);
+                                $(this.element).trigger("notificare:didUpdateBadge", 0);
+                                success(msg);
+                            }.bind(this))
+                                .fail(function(  jqXHR, textStatus, errorThrown ) {
+                                    errors("Notificare: Failed to delete a UUID");
+                                }.bind(this));
+                        }.bind(this));
+
+                }
             }
 
         },
+
         /**
          * Get a notification object
          * @param notification
          * @private
          */
         _getNotification: function (notification) {
-
-            $.ajax({
-                type: "GET",
-                url: this.options.apiUrl + '/notification/' + notification.id,
-                beforeSend: function (xhr) {
-                    xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
-                }.bind(this)
-            }).done(function( msg ) {
-                if(this.allowedNotifications){
-
-                    if(this.options.soundsDir && notification.sound){
-                        var audio = new Audio(this.options.soundsDir + notification.sound);
-                        audio.load();
-                        audio.play();
-                    }
-                    this.showNotification(msg);
-                }
-
-                this.logEvent({
-                    sessionID: this.uniqueId,
-                    type: 're.notifica.event.notification.Receive',
-                    notification: notification.notificationId || notification.id,
-                    userID: this.options.userId || null,
-                    deviceID: this._getCookie('uuid')
-                },  function(data){
-
-                }, function(error){
-
-                });
-
-                $(this.element).trigger("notificare:didReceiveNotification", notification);
-
-            }.bind(this)).fail(function(  jqXHR, textStatus, errorThrown ) {
-                setTimeout(function() {
-                    this._getNotification(notification);
-                }.bind(this), 2000);
-            }.bind(this));
-
-        },
-
-
-        /**
-         * Get a notification object for a Chrome event
-         * @param notification
-         * @private
-         */
-        _getChromeNotification: function (notification) {
 
             $.ajax({
                 type: "GET",
@@ -790,18 +772,24 @@
                 this._refreshBadge();
             }.bind(this)).fail(function(  jqXHR, textStatus, errorThrown ) {
                 setTimeout(function() {
-                    this._getChromeNotification(notification);
+                    this._getNotification(notification);
                 }.bind(this), 2000);
             }.bind(this));
 
         },
 
         /**
-         * Handle click of a Chrome Notification
+         * Helper method to handle notifications
+         */
+        handleAction: function(notification, label){
+            this._handleActionClickOnWebPushNotification(notification, label);
+        },
+        /**
+         * Handle click of a WebPush Notification
          * @param notification
          * @private
          */
-        _handleClickOnChromeNotification: function(notification){
+        _handleClickOnWebPushNotification: function(notification){
             var url = this.applicationInfo.websitePushConfig.urlFormatString.replace("%@", notification);
             window.location.replace(url);
             this._onURLLocationChanged();
@@ -812,7 +800,7 @@
          * @param notification
          * @private
          */
-        _handleActionClickOnChromeNotification: function(notification, label){
+        _handleActionClickOnWebPushNotification: function(notification, label){
 
             $.ajax({
                 type: "GET",
@@ -837,7 +825,7 @@
 
             }.bind(this)).fail(function(  jqXHR, textStatus, errorThrown ) {
                 setTimeout(function() {
-                    this._handleActionClickOnChromeNotification(notification, label);
+                    this._handleActionClickOnWebPushNotification(notification, label);
                 }.bind(this), 2000);
             }.bind(this));
         },
@@ -905,10 +893,9 @@
         _replyOnAction: function(msg, action, data){
             this.reply(msg.notification._id, action.label, data, function(){
                 $(this.element).trigger("notificare:didExecuteAction", msg.notification);
-            }, function(){
+            }.bind(this), function(){
                 $(this.element).trigger("notificare:didFailToExecuteAction", msg.notification);
-            });
-
+            }.bind(this));
         },
 
         /**
@@ -1274,7 +1261,7 @@
         _dataURItoBlob: function(dataURI) {
             // convert base64/URLEncoded data component to raw binary data held in a string
             var byteString,
-                mimestring
+                mimestring;
 
             if(dataURI.split(',')[0].indexOf('base64') !== -1 ) {
                 byteString = atob(dataURI.split(',')[1])
@@ -1282,7 +1269,7 @@
                 byteString = decodeURI(dataURI.split(',')[1])
             }
 
-            mimestring = dataURI.split(',')[0].split(':')[1].split(';')[0]
+            mimestring = dataURI.split(',')[0].split(':')[1].split(';')[0];
 
             var content = new Array();
             for (var i = 0; i < byteString.length; i++) {
@@ -1294,6 +1281,7 @@
 
         /**
          * Upload a file of type
+         * @param file
          * @param type
          * @param success
          * @param errors
@@ -1328,11 +1316,7 @@
          * @returns {boolean}
          */
         isDeviceRegistered: function(){
-            if(this._getCookie('uuid')){
-                return true;
-            } else {
-                return false;
-            }
+            return !!this._getCookie('uuid');
         },
         /**
          * Open Notification
@@ -1355,86 +1339,6 @@
                     this.openNotification(notification);
                 }.bind(this), 2000);
             }.bind(this));
-
-        },
-
-        /**
-         * Show notification
-         * @param msg
-         */
-        showNotification: function (msg) {
-
-            if (msg && msg.notification && msg.notification.message) {
-                if ("Notification" in window) {
-
-                    try {
-                        var n = new Notification(
-                            this.applicationInfo.name,
-                            {
-                                'body': msg.notification.message,
-                                'tag': msg.notification._id,
-                                'icon': this.options.awsStorage + this.applicationInfo.websitePushConfig.icon
-                            }
-                        );
-                        // remove the notification from Notification Center when it is clicked
-                        n.onclick = function () {
-                            n.close();
-                            var url = this.applicationInfo.websitePushConfig.urlFormatString.replace("%@", msg.notification._id);
-                            window.location.replace(url);
-                            this._onURLLocationChanged();
-
-                        }.bind(this);
-
-                    } catch (e) {
-
-                        //If native Notification is not possible use the window.confirm
-                        var n = window.confirm(msg.notification.message);
-
-                        if (n == true) {
-                            var url = this.applicationInfo.websitePushConfig.urlFormatString.replace("%@", msg.notification._id);
-                            window.location.replace(url);
-                            this._onURLLocationChanged();
-                        }
-
-                    }
-
-                } else if ("webkitNotifications" in window) {
-                    var n = window.webkitNotifications.createNotification(this.options.awsStorage + this.applicationInfo.websitePushConfig.icon, this.applicationInfo.name, msg.notification.message);
-                    n.show();
-                    n.onclick = function () {
-
-                        var url = this.applicationInfo.websitePushConfig.urlFormatString.replace("%@", msg.notification._id);
-                        window.location.replace(url);
-                        this._onURLLocationChanged();
-
-                    }.bind(this);
-
-                } else if ("mozNotification" in navigator) {
-
-                    var n = navigator.mozNotification.createNotification(this.applicationInfo.name, msg.notification.message, this.options.awsStorage + this.applicationInfo.websitePushConfig.icon);
-                    n.show();
-                    n.onclick = function () {
-
-                        var url = this.applicationInfo.websitePushConfig.urlFormatString.replace("%@", msg.notification._id);
-                        window.location.replace(url);
-                        this._onURLLocationChanged();
-
-                    }.bind(this);
-
-                } else {
-
-                    //If native Notification is not possible use the window.confirm
-                    var n = window.confirm(msg.notification.message);
-
-                    if (n == true) {
-                        var url = this.applicationInfo.websitePushConfig.urlFormatString.replace("%@", msg.notification._id);
-                        window.location.replace(url);
-                        this._onURLLocationChanged();
-                    }
-                }
-            }
-
-            this._refreshBadge();
 
         },
 
@@ -1500,8 +1404,8 @@
                 contentType: "application/json; charset=utf-8",
                 dataType: "json"
             }).done(function( msg ) {
-                    success(msg);
-                }.bind(this))
+                success(msg);
+            }.bind(this))
                 .fail(function(  jqXHR, textStatus, errorThrown ) {
                     errors('Notificare: Failed to register log');
                 }.bind(this));
@@ -1529,8 +1433,8 @@
                 contentType: "application/json; charset=utf-8",
                 dataType: "json"
             }).done(function( msg ) {
-                    success(msg);
-                }.bind(this))
+                success(msg);
+            }.bind(this))
                 .fail(function(  jqXHR, textStatus, errorThrown ) {
                     errors('Notificare: Failed to register custom event');
                 }.bind(this));
@@ -1544,13 +1448,13 @@
             if (this._getCookie('uuid')) {
                 $.ajax({
                     type: "GET",
-                    url: this.options.apiUrl + '/device/' + this._getCookie('uuid') + '/tags',
+                    url: this.options.apiUrl + '/device/' + encodeURIComponent(this._getCookie('uuid')) + '/tags',
                     beforeSend: function (xhr) {
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this)
                 }).done(function( msg ) {
-                        success(msg.tags);
-                    }.bind(this))
+                    success(msg.tags);
+                }.bind(this))
                     .fail(function(  jqXHR, textStatus, errorThrown ) {
                         errors("Notificare: Failed to get tags for device");
                     }.bind(this));
@@ -1568,7 +1472,7 @@
             if (this._getCookie('uuid')) {
                 $.ajax({
                     type: "PUT",
-                    url: this.options.apiUrl + '/device/' + this._getCookie('uuid') + '/addtags',
+                    url: this.options.apiUrl + '/device/' + encodeURIComponent(this._getCookie('uuid')) + '/addtags',
                     beforeSend: function (xhr) {
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this),
@@ -1578,8 +1482,8 @@
                     contentType: "application/json; charset=utf-8",
                     dataType: "json"
                 }).done(function( msg ) {
-                        success(msg);
-                    }.bind(this))
+                    success(msg);
+                }.bind(this))
                     .fail(function(  jqXHR, textStatus, errorThrown ) {
                         errors("Notificare: Failed to add tags to device");
                     }.bind(this));
@@ -1598,7 +1502,7 @@
             if (this._getCookie('uuid')) {
                 $.ajax({
                     type: "PUT",
-                    url: this.options.apiUrl + '/device/' + this._getCookie('uuid') + '/removetag',
+                    url: this.options.apiUrl + '/device/' + encodeURIComponent(this._getCookie('uuid')) + '/removetag',
                     beforeSend: function (xhr) {
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this),
@@ -1608,8 +1512,8 @@
                     contentType: "application/json; charset=utf-8",
                     dataType: "json"
                 }).done(function( msg ) {
-                        success(msg);
-                    }.bind(this))
+                    success(msg);
+                }.bind(this))
                     .fail(function(  jqXHR, textStatus, errorThrown ) {
                         errors(null);
                     }.bind(this));
@@ -1627,7 +1531,7 @@
             if (this._getCookie('uuid')) {
                 $.ajax({
                     type: "PUT",
-                    url: this.options.apiUrl + '/device/' + this._getCookie('uuid') + '/cleartags',
+                    url: this.options.apiUrl + '/device/' + encodeURIComponent(this._getCookie('uuid')) + '/cleartags',
                     beforeSend: function (xhr) {
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this),
@@ -1635,8 +1539,8 @@
                     contentType: "application/json; charset=utf-8",
                     dataType: "json"
                 }).done(function( msg ) {
-                        success(msg);
-                    }.bind(this))
+                    success(msg);
+                }.bind(this))
                     .fail(function(  jqXHR, textStatus, errorThrown ) {
                         errors("Failed to clear device tags.");
                     }.bind(this));
@@ -1655,13 +1559,13 @@
             if (this._getCookie('uuid')) {
                 $.ajax({
                     type: "GET",
-                    url: this.options.apiUrl + '/device/' + this._getCookie('uuid') + '/userdata',
+                    url: this.options.apiUrl + '/device/' + encodeURIComponent(this._getCookie('uuid')) + '/userdata',
                     beforeSend: function (xhr) {
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this)
                 }).done(function( msg ) {
-                        success(msg.userData);
-                    }.bind(this))
+                    success(msg.userData);
+                }.bind(this))
                     .fail(function(  jqXHR, textStatus, errorThrown ) {
                         errors("Notificare: Failed to get user data for device");
                     }.bind(this));
@@ -1679,7 +1583,7 @@
             if (this._getCookie('uuid')) {
                 $.ajax({
                     type: "PUT",
-                    url: this.options.apiUrl + '/device/' + this._getCookie('uuid') + '/userdata',
+                    url: this.options.apiUrl + '/device/' + encodeURIComponent(this._getCookie('uuid')) + '/userdata',
                     beforeSend: function (xhr) {
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this),
@@ -1687,8 +1591,8 @@
                     contentType: "application/json; charset=utf-8",
                     dataType: "json"
                 }).done(function( msg ) {
-                        success(msg);
-                    }.bind(this))
+                    success(msg);
+                }.bind(this))
                     .fail(function(  jqXHR, textStatus, errorThrown ) {
                         errors("Notificare: Failed to update user data for device");
                     }.bind(this));
@@ -1706,13 +1610,13 @@
             if (this._getCookie('uuid')) {
                 $.ajax({
                     type: "GET",
-                    url: this.options.apiUrl + '/device/' + this._getCookie('uuid') + '/dnd',
+                    url: this.options.apiUrl + '/device/' + encodeURIComponent(this._getCookie('uuid')) + '/dnd',
                     beforeSend: function (xhr) {
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this)
                 }).done(function( msg ) {
-                        success(msg.dnd);
-                    }.bind(this))
+                    success(msg.dnd);
+                }.bind(this))
                     .fail(function(  jqXHR, textStatus, errorThrown ) {
                         errors("Notificare: Failed to get dnd for device");
                     }.bind(this));
@@ -1727,13 +1631,13 @@
          * @param errors
          */
         updateDoNotDisturb: function (start, end, success, errors) {
+
             if (this._getCookie('uuid')) {
 
                 if (start && end) {
-
                     $.ajax({
                         type: "PUT",
-                        url: this.options.apiUrl + '/device/' + this._getCookie('uuid') + '/dnd',
+                        url: this.options.apiUrl + '/device/' + encodeURIComponent(this._getCookie('uuid')) + '/dnd',
                         beforeSend: function (xhr) {
                             xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                         }.bind(this),
@@ -1744,11 +1648,12 @@
                         contentType: "application/json; charset=utf-8",
                         dataType: "json"
                     }).done(function( msg ) {
-                            success(msg);
-                        }.bind(this))
+                        success(msg);
+                    }.bind(this))
                         .fail(function(  jqXHR, textStatus, errorThrown ) {
                             errors("Notificare: Failed to update dnd for device");
                         }.bind(this));
+
                 } else {
                     errors("Notificare: Calling update dnd without a start and end time");
                 }
@@ -1767,7 +1672,7 @@
             if (this._getCookie('uuid')) {
                 $.ajax({
                     type: "PUT",
-                    url: this.options.apiUrl + '/device/' + this._getCookie('uuid') + '/cleardnd',
+                    url: this.options.apiUrl + '/device/' + encodeURIComponent(this._getCookie('uuid')) + '/cleardnd',
                     beforeSend: function (xhr) {
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this),
@@ -1775,14 +1680,21 @@
                     contentType: "application/json; charset=utf-8",
                     dataType: "json"
                 }).done(function( msg ) {
-                        success(msg);
-                    }.bind(this))
+                    success(msg);
+                }.bind(this))
                     .fail(function(  jqXHR, textStatus, errorThrown ) {
                         errors("Notificare: Failed to clear dnd for device");
                     }.bind(this));
             } else {
                 errors("Notificare: Calling clear dnd before registering a deviceId");
             }
+        },
+
+        /**
+         * Helper method to check if location is allowed
+         */
+        isLocationAllowed: function(){
+            return localStorage.getItem("isLocationAllowed");
         },
         /**
          * Start Location Updates
@@ -1794,11 +1706,13 @@
                 if (this.applicationInfo.services && this.applicationInfo.services.locationServices) {
 
                     if (navigator.geolocation) {
-                        navigator.geolocation.watchPosition(function(position){
+                        this.navigatorWatchPosition = navigator.geolocation.watchPosition(function(position){
+
+                            localStorage.setItem("isLocationAllowed", 1);
 
                             var cachedPosition = JSON.parse(localStorage.getItem("position"));
 
-                            if(cachedPosition.latitude != position.coords.latitude || cachedPosition.longitude != position.coords.longitude){
+                            if(!cachedPosition || cachedPosition.latitude != position.coords.latitude || cachedPosition.longitude != position.coords.longitude){
 
                                 this._getDeviceCountry(position, function(data){
 
@@ -1830,6 +1744,9 @@
                             }
 
                         }.bind(this), function(error){
+
+                            localStorage.setItem("isLocationAllowed", 0);
+
                             switch(error.code) {
                                 case error.PERMISSION_DENIED:
                                     errors("Notificare: User denied the request for Geolocation");
@@ -1863,7 +1780,20 @@
         stopLocationUpdates: function(){
             if (this.applicationInfo.services && this.applicationInfo.services.locationServices) {
                 if (navigator.geolocation) {
-                    navigator.geolocation.clearWatch();
+                    navigator.geolocation.clearWatch(this.navigatorWatchPosition);
+                    localStorage.setItem("isLocationAllowed", 0);
+                    this.updateLocation({
+                        coords: {
+                            latitude: null,
+                            longitude: null
+                        }
+                    }, null, function(data){
+                        localStorage.setItem("position", null);
+                        this.log("Notificare: Location cleared successfully");
+                    }.bind(this), function(){
+                        this.log("Notificare: Failed to clear location");
+                    });
+
                 }
             } else {
                 this.log("Notificare: Your account does not support Location Services");
@@ -1880,7 +1810,7 @@
 
             $.ajax({
                 type: "PUT",
-                url: this.options.apiUrl + '/device/' + this._getCookie('uuid'),
+                url: this.options.apiUrl + '/device/' + encodeURIComponent(this._getCookie('uuid')),
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                 }.bind(this),
@@ -1892,19 +1822,19 @@
                 contentType: "application/json; charset=utf-8",
                 dataType: "json"
             }).done(function( msg ) {
-                    localStorage.setItem("position", JSON.stringify({
-                        accuracy: (!isNaN(position.coords.accuracy)) ? position.coords.accuracy : null,
-                        altitude: (!isNaN(position.coords.altitude)) ? position.coords.altitude : null,
-                        altitudeAccuracy: (!isNaN(position.coords.altitudeAccuracy)) ? position.coords.altitudeAccuracy : null,
-                        heading: (!isNaN(position.coords.heading)) ? position.coords.heading : null,
-                        speed: (!isNaN(position.coords.speed)) ? position.coords.speed : null,
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude,
-                        country: country,
-                        timestamp: position.timestamp
-                    }));
-                    success(JSON.parse(localStorage.getItem("position")));
-                }.bind(this))
+                localStorage.setItem("position", JSON.stringify({
+                    accuracy: (!isNaN(position.coords.accuracy)) ? position.coords.accuracy : null,
+                    altitude: (!isNaN(position.coords.altitude)) ? position.coords.altitude : null,
+                    altitudeAccuracy: (!isNaN(position.coords.altitudeAccuracy)) ? position.coords.altitudeAccuracy : null,
+                    heading: (!isNaN(position.coords.heading)) ? position.coords.heading : null,
+                    speed: (!isNaN(position.coords.speed)) ? position.coords.speed : null,
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    country: country,
+                    timestamp: position.timestamp
+                }));
+                success(JSON.parse(localStorage.getItem("position")));
+            }.bind(this))
                 .fail(function(  jqXHR, textStatus, errorThrown ) {
                     errors(null);
                 }.bind(this));
@@ -1920,13 +1850,42 @@
             if (this._getCookie('uuid')) {
                 $.ajax({
                     type: "GET",
-                    url: this.options.apiUrl + '/notification/inbox/fordevice/' + this._getCookie('uuid'),
+                    url: this.options.apiUrl + '/notification/inbox/fordevice/' + encodeURIComponent(this._getCookie('uuid')),
                     beforeSend: function (xhr) {
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this)
                 }).done(function( msg ) {
-                        success(msg.inboxItems);
-                    }.bind(this))
+                    success(msg.inboxItems);
+                }.bind(this))
+                    .fail(function(  jqXHR, textStatus, errorThrown ) {
+                        errors("Notificare: Failed to get the inbox");
+                    }.bind(this));
+            } else {
+                errors('Notificare: Calling fetchInbox before having a deviceId');
+            }
+        },
+
+        /**
+         * Get the inbox for a specific device
+         * @param success
+         * @param errors
+         */
+        fetchInboxWithParameters: function (since, skip, limit, success, errors) {
+            if (this._getCookie('uuid')) {
+                $.ajax({
+                    type: "GET",
+                    url: this.options.apiUrl + '/notification/inbox/fordevice/' + encodeURIComponent(this._getCookie('uuid')),
+                    data: {
+                        since: since,
+                        skip: skip,
+                        limit: limit
+                    },
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
+                    }.bind(this)
+                }).done(function( msg ) {
+                    success(msg);
+                }.bind(this))
                     .fail(function(  jqXHR, textStatus, errorThrown ) {
                         errors("Notificare: Failed to get the inbox");
                     }.bind(this));
@@ -1976,14 +1935,14 @@
             if (this._getCookie('uuid')) {
                 $.ajax({
                     type: "DELETE",
-                    url: this.options.apiUrl + '/notification/inbox/fordevice/' + this._getCookie('uuid'),
+                    url: this.options.apiUrl + '/notification/inbox/fordevice/' + encodeURIComponent(this._getCookie('uuid')),
                     beforeSend: function (xhr) {
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this)
                 }).done(function( msg ) {
-                        this._refreshBadge();
-                        success(msg);
-                    }.bind(this))
+                    this._refreshBadge();
+                    success(msg);
+                }.bind(this))
                     .fail(function(  jqXHR, textStatus, errorThrown ) {
                         errors("Notificare: Failed to clear the inbox");
                     }.bind(this));
@@ -2006,9 +1965,9 @@
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this)
                 }).done(function( msg ) {
-                        this._refreshBadge();
-                        success(msg);
-                    }.bind(this))
+                    this._refreshBadge();
+                    success(msg);
+                }.bind(this))
                     .fail(function(  jqXHR, textStatus, errorThrown ) {
                         errors("Notificare: Failed to remove item from inbox");
                     }.bind(this));
@@ -2019,14 +1978,15 @@
 
 
         /**
-         * Helper method to get the latest unread number
+         * Refresh Badge
+         * @private
          */
         _refreshBadge: function () {
 
             if (this._getCookie('uuid')) {
                 $.ajax({
                     type: "GET",
-                    url: this.options.apiUrl + '/notification/inbox/fordevice/' + this._getCookie('uuid'),
+                    url: this.options.apiUrl + '/notification/inbox/fordevice/' + encodeURIComponent(this._getCookie('uuid')),
                     data:{
                         since: new Date().getTime()
                     },
@@ -2034,9 +1994,9 @@
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this)
                 }).done(function( msg ) {
-                        localStorage.setItem("badge", msg.unread);
-                        $(this.element).trigger("notificare:didUpdateBadge", msg.unread);
-                    }.bind(this))
+                    localStorage.setItem("badge", msg.unread);
+                    $(this.element).trigger("notificare:didUpdateBadge", msg.unread);
+                }.bind(this))
                     .fail(function(  jqXHR, textStatus, errorThrown ) {
                         $(this.element).trigger("notificare:didUpdateBadge", localStorage.getItem("badge"));
                     }.bind(this));
@@ -2045,6 +2005,12 @@
             }
         },
 
+        /**
+         * Handle Regions
+         * @param position
+         * @param regions
+         * @private
+         */
         _handleRegions: function(position, regions){
 
             $.each( regions, function( index, region ){
@@ -2091,8 +2057,8 @@
                 }.bind(this),
                 data: null
             }).done(function( msg ) {
-                    success(msg.regions);
-                }.bind(this))
+                success(msg.regions);
+            }.bind(this))
                 .fail(function(  jqXHR, textStatus, errorThrown ) {
                     errors('Notificare: Failed to retrieve nearest regions');
                 }.bind(this));
@@ -2112,7 +2078,7 @@
             var lat2 = region.geometry.coordinates[1];
             var lon1 = position.coords.longitude;
             var lon2 = region.geometry.coordinates[0];
-            var R = 6371000; // metres
+            var R = 6371000; // meters
             var _r1 = lat1 * Math.PI / 180;
             var _r2 = lat2 * Math.PI / 180;
             var _a1 = (lat2-lat1) * Math.PI / 180;
@@ -2145,27 +2111,27 @@
                 }
             }).done(function( msg ) {
 
-                    if(msg.status === 'OK' && msg.results && msg.results.length > 0){
+                if(msg.status === 'OK' && msg.results && msg.results.length > 0){
 
-                        var country;
+                    var country;
 
-                        for (i=0; i< msg.results[0].address_components.length; i++){
-                            for (j=0; j< msg.results[0].address_components[i].types.length; j++){
-                                if(msg.results[0].address_components[i].types[j] == "country")
-                                    country = msg.results[0].address_components[i].short_name;
-                            }
+                    for (i=0; i< msg.results[0].address_components.length; i++){
+                        for (j=0; j< msg.results[0].address_components[i].types.length; j++){
+                            if(msg.results[0].address_components[i].types[j] == "country")
+                                country = msg.results[0].address_components[i].short_name;
                         }
-
-                        callback({
-                            country: country
-                        });
-                    } else {
-                        callback({
-                            country: null
-                        });
                     }
 
-                }.bind(this))
+                    callback({
+                        country: country
+                    });
+                } else {
+                    callback({
+                        country: null
+                    });
+                }
+
+            }.bind(this))
                 .fail(function(  jqXHR, textStatus, errorThrown ) {
                     callback({
                         country: null
@@ -2197,8 +2163,8 @@
                     contentType: "application/json; charset=utf-8",
                     dataType: "json"
                 }).done(function (msg) {
-                        success(msg);
-                    }.bind(this))
+                    success(msg);
+                }.bind(this))
                     .fail(function(  jqXHR, textStatus, errorThrown ) {
                         errors('Notificare: Failed to register reply');
                     }.bind(this));
@@ -2222,20 +2188,20 @@
                     }.bind(this)
                 }).done(function( msg ) {
 
-                        var assets = [];
+                    var assets = [];
 
-                        $.each( msg.assets, function( index, asset ){
-                            assets.push({
-                                title: asset.title,
-                                description: asset.description,
-                                url: 'https://push.notifica.re/asset/file/' + asset.key,
-                                metaData: asset.metaData,
-                                button: asset.button
-                            });
-                        }.bind(this));
+                    $.each( msg.assets, function( index, asset ){
+                        assets.push({
+                            title: asset.title,
+                            description: asset.description,
+                            url: (asset.key) ? this.options.assetsUrl + asset.key : null,
+                            metaData: asset.metaData,
+                            button: asset.button
+                        });
+                    }.bind(this));
 
-                        success(assets);
-                    }.bind(this))
+                    success(assets);
+                }.bind(this))
                     .fail(function(  jqXHR, textStatus, errorThrown ) {
                         errors("Notificare: Failed to get assets for this group");
                     }.bind(this))
@@ -2260,8 +2226,8 @@
                         xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
                     }.bind(this)
                 }).done(function( msg ) {
-                        success(msg.pass);
-                    }.bind(this))
+                    success(msg.pass);
+                }.bind(this))
                     .fail(function(  jqXHR, textStatus, errorThrown ) {
                         errors("Notificare: Failed to get pass for this serial");
                     }.bind(this))
@@ -2271,6 +2237,14 @@
 
         },
 
+        /**
+         * Handle Geo-Trigger
+         * @param type
+         * @param region
+         * @param success
+         * @param errors
+         * @private
+         */
         _trigger: function (type, region, success, errors) {
 
             $.ajax({
@@ -2286,11 +2260,75 @@
                 contentType: "application/json; charset=utf-8",
                 dataType: "json"
             }).done(function (msg) {
-                    success(msg);
-                }.bind(this))
+                success(msg);
+            }.bind(this))
                 .fail(function(  jqXHR, textStatus, errorThrown ) {
                     errors('Notificare: Failed to trigger region');
                 }.bind(this));
+
+        },
+
+        /**
+         * Perform Cloud API requests
+         * @param type
+         * @param region
+         * @param success
+         * @param errors
+         * @private
+         */
+        performCloudAPIRequest: function (verb, path, params, success, errors) {
+
+            if (verb === 'GET') {
+
+                $.ajax({
+                    type: 'GET',
+                    url: this.options.apiUrl + path,
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
+                    }.bind(this),
+                    data: params
+                }).done(function (msg) {
+                    success(msg);
+                }.bind(this))
+                    .fail(function(  jqXHR, textStatus, errorThrown ) {
+                        errors(jqXHR, textStatus, errorThrown);
+                    }.bind(this));
+
+            } else if (verb === 'POST' || verb === 'PUT') {
+
+                $.ajax({
+                    type: verb,
+                    url: this.options.apiUrl + path,
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
+                    }.bind(this),
+                    data: JSON.stringify(params),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json"
+                }).done(function (msg) {
+                    success(msg);
+                }.bind(this))
+                    .fail(function(  jqXHR, textStatus, errorThrown ) {
+                        errors(jqXHR, textStatus, errorThrown);
+                    }.bind(this));
+
+            } else if (verb === 'DELETE') {
+
+                $.ajax({
+                    type: verb,
+                    url: this.options.apiUrl + path,
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader ("Authorization", "Basic " + btoa(this.options.appKey + ":" + this.options.appSecret));
+                    }.bind(this)
+                }).done(function (msg) {
+                    success(msg);
+                }.bind(this))
+                    .fail(function(  jqXHR, textStatus, errorThrown ) {
+                        errors(jqXHR, textStatus, errorThrown);
+                    }.bind(this));
+
+            }
+
 
         }
     };

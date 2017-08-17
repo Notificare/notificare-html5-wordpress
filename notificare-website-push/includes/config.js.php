@@ -6,7 +6,6 @@ $contents = array(
       "appVersion" => $_GET['appVersion'],
       "appKey" => $_GET['appKey'],
       "appSecret" => $_GET['appSecret'],
-      "allowSilent" => $_GET['allowSilent'],
       "soundsDir" => $_GET['soundsDir'],
       "serviceWorker" => $_GET['serviceWorker'],
       "serviceWorkerScope" => $_GET['serviceWorkerScope'],
