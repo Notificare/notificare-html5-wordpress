@@ -56,6 +56,8 @@ All the major browsers out there support our Website Push functionality. Last ve
 3. Automated RSS Push Notifications
 
 == Upgrade Notice ==
+= 1.6.2 =
+* Updated to latest 1.9.8 SDK
 = 1.6.1 =
 * Updated to latest 1.9.7 SDK
 = 1.6.0 =
@@ -98,6 +100,9 @@ It's official! You can now send remote notifications to your website visitors.
 
 
 == Changelog ==
+
+= 1.6.2 =
+* Updated to latest 1.9.8 SDK
 
 = 1.6.1 =
 * Updated to latest 1.9.7 SDK
