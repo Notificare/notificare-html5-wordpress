@@ -4,7 +4,7 @@ Donate link: https://notifica.re
 Tags: push notifications, safari push, chrome push, firefox push, websockets
 Requires at least: 3.0.1
 Tested up to: 4.6
-Stable tag: 1.10.0
+Stable tag: 1.10.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -56,6 +56,8 @@ All the major browsers out there support our Website Push functionality. Last ve
 3. Automated RSS Push Notifications
 
 == Upgrade Notice ==
+= 1.10.1 =
+* Updated to latest 1.10.1 SDK
 = 1.10.0 =
 * Updated to latest 1.10.0 SDK
 = 1.7.0 =
@@ -108,6 +110,17 @@ It's official! You can now send remote notifications to your website visitors.
 
 
 == Changelog ==
+
+= 1.10.1 =
+* Updated to latest 1.10.1 SDK
+
+= 1.10.0 =
+* Updated to latest 1.10.0 SDK
+
+= 1.7.0 =
+* Removed public JS handling
+* Add Service-Worker-Allowed header
+* Parse integer values in config.js
 
 = 1.6.3 =
 * Small bugfixes
