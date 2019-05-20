@@ -72,8 +72,7 @@ class Notificare_Public {
 	 */
 	public function enqueue_scripts() {
 
-		wp_enqueue_script( $this->plugin_name . 'UAParser', plugin_dir_url( __FILE__ ) . 'js/uaparser.min.js', array( 'jquery' ), $this->version, false );
-		wp_enqueue_script( $this->plugin_name . 'Push', plugin_dir_url( __FILE__ ) . 'js/notificare.jquery.min.js', array( 'jquery' ), $this->version, false );
+		wp_enqueue_script( $this->plugin_name . 'Push', plugin_dir_url( __FILE__ ) . 'js/notificare.min.js', array(), $this->version, false );
 	}
 
 }

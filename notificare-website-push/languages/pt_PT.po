@@ -72,8 +72,8 @@ msgid "Service Worker"
 msgstr "Service Worker"
 
 #: admin/partials/notificare-admin-display.php:57
-msgid "Service Worker File"
-msgstr "Ficheiro Service Worker"
+msgid "Service Worker File (only if different than the one provided by this plugin)"
+msgstr "Ficheiro Service Worker (inserir apenas se for diferente do fornecido neste plugin)"
 
 #: admin/partials/notificare-admin-display.php:61
 msgid "Service Worker Scope"
@@ -88,12 +88,18 @@ msgid "GCM Sender ID"
 msgstr "GCM Sender ID"
 
 #: admin/partials/notificare-admin-display.php:68
-msgid "Substituir o manifest.json"
-msgstr ""
+msgid "Override manifest.json"
+msgstr "Substituir o manifest.json"
 
 #: admin/partials/notificare-admin-display.php:73
 msgid "If not overridden, you must provide a manifest file yourself. Read more about manifest files <a href=\"%s\">here</a>."
 msgstr "Se não substituir o ficheiro manifest.json, terá que fornecer um você mesmo. Leia mais acerca de manifestos para a web, <a href=\"%s\">aqui</a>."
+
+msgid "Google Maps API Settings"
+msgstr "Configurações de Google Maps API"
+
+msgid "Google Maps API Key"
+msgstr "Google Maps API Key"
 
 #: admin/partials/notificare-admin-display.php:69
 msgid "Geolocation Options"

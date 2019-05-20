@@ -1,70 +1,69 @@
-(function( $ ) {
-	'use strict';
+document.addEventListener("DOMContentLoaded", function() {
+	var notificare = new Notificare();
 
-	$(document).ready(function(){
+	notificare.launch();
 
-		var instance = $('body').notificare();
+	notificare.onReady = function(application) {
+		if (notificare.isWebPushSupported()) {
+			notificare.registerForNotifications();
+		}
+	};
 
-		$("body").bind("notificare:onReady", function(event, data) {
-			instance.notificare("registerForNotifications");
+	notificare.didRegisterDevice = function(device) {
+		if (notificare.isWebPushEnabled()) {
+			notificare.addTag("tag_webpush_enabled");
+			notificare.removeTag("tag_webpush_disabled");
+		} else {
+			notificare.addTag("tag_webpush_disabled");
+			notificare.removeTag("tag_webpush_enabled");
+		}
+		if (notificare.isLocationServicesEnabled()) {
+			notificare.startLocationUpdates();
+		}
+	};
 
-			instance.notificare("fetchAssets", "GROUP_NAME", function(assets){
-				console.log(assets);
-			}, function(error){
-				console.log(error);
-			});
+	notificare.didFailToRegisterDevice = function(e) {
+		console.log('didFailToRegisterDevice', e);
+	};
 
-			instance.notificare("fetchPass", "SERIAL", function(pass){
-				console.log(pass);
-			}, function(error){
-				console.log(error);
-			});
+	notificare.didFailToRegisterForNotifications = function(e) {
+		console.log('didFailToRegisterForNotifications', e);
+	};
 
-		});
+	notificare.didUpdateBadge = function(badge) {
+		console.log('didUpdateBadge');
+	};
 
-		$("body").bind("notificare:didReceiveDeviceToken", function(event, data) {
-			//instance.notificare("userId","userID");
-			//instance.notificare("username","userName");
-			instance.notificare("registerDevice",data);
-		});
+	notificare.didUpdateLocation = function(location) {
+		console.log('didUpdateLocation', location);
+	};
 
-		$("body").bind("notificare:didRegisterDevice", function(event, data) {
-			//Here it's safe to register tags
+	notificare.didFailToUpdateLocation = function(e) {
+		console.log('didFailToUpdateLocation', e);
+	};
 
-			instance.notificare("getTags", function(tags){
-				console.log(tags);
-			}, function(error){
-				console.log(error);
-			});
+	notificare.didReceiveNotification = function(notification) {
+		console.log('didReceiveNotification', notification);
+	};
 
-			instance.notificare("startLocationUpdates", function(data){
-				console.log(data);
-			}, function(error){
-				console.log(error);
-			});
+	notificare.didReceiveUnknownNotification = function(notification) {
+		console.log('didReceiveUnknownNotification', notification);
+	};
 
-		});
+	notificare.didReceiveWorkerPush = function(notification) {
+		console.log('didReceiveWorkerPush', notification);
+	};
 
-		$("body").bind("notificare:didFailToRegisterDevice", function(event, data) {
-			instance.notificare("registerDevice", data);
+	notificare.didReceiveSystemNotification = function(notification) {
+		console.log('didReceiveSystemNotification', notification);
+	};
 
+	notificare.didOpenNotification = function(notification) {
+		handleNotification(notification);
+	};
 
-		});
+	notificare.shouldPerformActionWithURL = function(url) {
+		window.location.href = url;
+	};
 
-		$("body").bind("notificare:didReceiveNotification", function(event, data) {
-
-		});
-
-		$("body").bind("notificare:didOpenNotification", function(event, data) {
-
-
-		});
-
-		$("body").bind("notificare:didUpdateBadge", function(event, data) {
-
-		});
-
-
-	});
-
-})( jQuery );
+});

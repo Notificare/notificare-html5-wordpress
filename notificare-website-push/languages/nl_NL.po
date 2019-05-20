@@ -37,15 +37,15 @@ msgstr "Voor meer informatie over de instellingen van deze plugin, ga naar"
 
 #: admin/partials/notificare-admin-display.php:25
 msgid "Application Name"
-msgstr "De naam van je toepassing"
+msgstr "Applicatienaam"
 
 #: admin/partials/notificare-admin-display.php:29
 msgid "Application Host"
-msgstr "Toepassing host"
+msgstr "Application Host"
 
 #: admin/partials/notificare-admin-display.php:33
 msgid "Application Version"
-msgstr "Toepassing versie"
+msgstr "Applicatieversie"
 
 #: admin/partials/notificare-admin-display.php:39
 msgid "Allow Silent Push"
@@ -53,31 +53,31 @@ msgstr "Sta stille push toe"
 
 #: admin/partials/notificare-admin-display.php:43
 msgid "Sounds Directory"
-msgstr "Geluiden Map"
+msgstr "Locatie voor Audiobestanden"
 
 #: admin/partials/notificare-admin-display.php:46
 msgid "Application Keys"
-msgstr "Toepassingssleutels"
+msgstr "Application Keys"
 
 #: admin/partials/notificare-admin-display.php:48
 msgid "Application Key"
-msgstr "Toepassingssleutel"
+msgstr "Application Key"
 
 #: admin/partials/notificare-admin-display.php:52
 msgid "Application Secret"
-msgstr "Toepassingsgeheim"
+msgstr "Application Secret"
 
 #: admin/partials/notificare-admin-display.php:55
 msgid "Service Worker"
-msgstr "Service medewerker"
+msgstr "Service Worker"
 
 #: admin/partials/notificare-admin-display.php:57
-msgid "Service Worker File"
-msgstr "Service medewerker bestand"
+msgid "Service Worker File (only if different than the one provided by this plugin)"
+msgstr "Service Worker bestand (alleen indien anders dan aangeleverd door deze plugin)"
 
 #: admin/partials/notificare-admin-display.php:61
 msgid "Service Worker Scope"
-msgstr "Service medewerker reikwijdte"
+msgstr "Service Worker Scope"
 
 #: admin/partials/notificare-admin-display.php:64
 msgid "GCM"
@@ -89,13 +89,18 @@ msgstr "GCM Sender ID"
 
 
 #: admin/partials/notificare-admin-display.php:68
-msgid "Genereer manifest.json"
-msgstr ""
+msgid "Override manifest.json"
+msgstr "Genereer manifest.json"
 
 #: admin/partials/notificare-admin-display.php:73
 msgid "If not overridden, you must provide a manifest file yourself. Read more about manifest files <a href=\"%s\">here</a>."
 msgstr "Indien niet gegenereerd, dient u zelf een manifest bestand te plaatsen. Lees <a href=\"%s\">hier</a> meer over manifest bestanden."
 
+msgid "Google Maps API Settings"
+msgstr "Google Maps API Instellingen"
+
+msgid "Google Maps API Key"
+msgstr "Google Maps API Key"
 
 #: admin/partials/notificare-admin-display.php:69
 msgid "Geolocation Options"
@@ -111,7 +116,7 @@ msgstr "Schakel hoge accuraatheid in"
 
 #: admin/partials/notificare-admin-display.php:81
 msgid "Maximum Age"
-msgstr "Maximaal toegestane leeftijd"
+msgstr "Maximale geldigheidsduur"
 
 #: includes/class-notificare.php:252
 msgid "You do not have sufficient permissions to access this page."
@@ -119,23 +124,23 @@ msgstr "Je hebt niet voldoende rechten om deze pagina te bezoeken"
 
 #: includes/class-notificare.php:266
 msgid "Application Name is required"
-msgstr "Toepassingsnaam is vereist"
+msgstr "Applicatienaam is vereist"
 
 #: includes/class-notificare.php:279
 msgid "Application Host is required"
-msgstr "Toepassings host is vereist"
+msgstr "Applicatie host is vereist"
 
 #: includes/class-notificare.php:292
 msgid "Application Version is required"
-msgstr "Versienummer van je toepassing is vereist"
+msgstr "Versienummer van je applicatie is vereist"
 
 #: includes/class-notificare.php:305
 msgid "Application Key is required"
-msgstr "Toepassingssleutel is vereist"
+msgstr "Application Key is vereist"
 
 #: includes/class-notificare.php:318
 msgid "Application Secret is required"
-msgstr "Toepassingsgeheim is vereist"
+msgstr "Application Secret is vereist"
 
 #: includes/class-notificare.php:362
 msgid "Settings saved successfully"

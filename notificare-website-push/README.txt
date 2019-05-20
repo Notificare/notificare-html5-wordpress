@@ -1,10 +1,10 @@
 === Notificare ===
 Contributors: jjonthemix,silentjohnny
-Donate link: https://notifica.re
-Tags: push notifications, safari push, chrome push, firefox push, websockets
+Donate link: https://notificare.com
+Tags: push notifications, safari push, chrome push, firefox push, edge push
 Requires at least: 3.0.1
-Tested up to: 4.6
-Stable tag: 1.10.1
+Tested up to: 5.2
+Stable tag: 2.0.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -29,9 +29,9 @@ A complete set of features that your website is missing:
 Get started today in a few simple steps:
 
 1. Signup for free with [Notificare](https://notifica.re/signup/)
-2. Upload `notificare` directory to the `/wp-content/plugins/` directory or use the zip file through the plugin area in your WordPress installation
+2. Use "Install Now" from the plugin Admin panel, or use the zip file through the plugin area in your WordPress installation
 3. Activate the plugin through the 'Plugins' menu in WordPress
-4. Configure the Notificare plugin according to our [Documentation](http://docs.notifica.re/sdk)
+4. Configure the Notificare plugin according to our [Documentation](http://docs.notifica.re/sdk/v2/wordpress/setup)
 5. Implement your messaging strategy in our [Dashboard](https://dashboard.notifica.re)
 
 == Frequently Asked Questions ==
@@ -46,7 +46,7 @@ No. But it is recommended. Our Premium Support plans allow you to contact our en
 
 = Which browsers support your notifications? =
 
-All the major browsers out there support our Website Push functionality. Last versions of Chrome, Firefox, Opera and Safari support native notifications. All these combined make up for more than 85% of market share.
+All the major browsers out there support our Website Push functionality. Recent versions of Chrome, Firefox, Opera, Edge and Safari support native notifications. All these combined make up for more than 90% of market share.
 
 
 == Screenshots ==
@@ -56,6 +56,8 @@ All the major browsers out there support our Website Push functionality. Last ve
 3. Automated RSS Push Notifications
 
 == Upgrade Notice ==
+= 2.0.0
+* Updated to latest 2.0.9 SDK, please follow instructions in docs to update your code if you are upgrading from 1.x
 = 1.10.1 =
 * Updated to latest 1.10.1 SDK
 = 1.10.0 =
@@ -110,6 +112,9 @@ It's official! You can now send remote notifications to your website visitors.
 
 
 == Changelog ==
+
+= 2.0.0
+* Updated to latest 2.0.9 SDK
 
 = 1.10.1 =
 * Updated to latest 1.10.1 SDK

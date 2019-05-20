@@ -48,7 +48,7 @@
             </div>
             <h3><?php _e( 'Service Worker', Notificare::PLUGIN_NAME ) ?></h3>
             <div class="field">
-                <label for="applicationserviceworker"><?php _e( 'Service Worker File', Notificare::PLUGIN_NAME ) ?></label>
+                <label for="applicationserviceworker"><?php _e( 'Service Worker File (only if different than the one provided by this plugin)', Notificare::PLUGIN_NAME ) ?></label>
                 <input name="applicationserviceworker" type="text" id="applicationserviceworker" value="<?php echo esc_html( get_option( 'notificare_serviceWorker' ) ); ?>" class="regular-text" />
             </div>
             <div class="field">
@@ -61,11 +61,16 @@
                     <input name="applicationoverridemanifest" type="checkbox" id="applicationoverridemanifest" value="1" <?php checked('1', get_option('notificare_overrideManifest'));?> />
                     <?php _e( 'Override manifest.json', Notificare::PLUGIN_NAME  ) ?>
                 </label>
-                <div class="description"><?php printf( __( 'If not overridden, you must provide a manifest file yourself. Read more about manifest files ', Notificare::PLUGIN_NAME ) ); ?> <a href="https://developer.mozilla.org/en-US/docs/Web/Manifest" target="_blank"><?php printf( __( 'here', Notificare::PLUGIN_NAME ) ); ?></a>.</div>
+                <div class="description"><?php printf( __( 'If not overridden, you must provide a manifest file yourself. Read more about manifest files <a href="%s">here</a>.', Notificare::PLUGIN_NAME ), "https://developer.mozilla.org/en-US/docs/Web/Manifest" );?></div>
             </div>
             <div class="field">
                 <label for="applicationgcmsender"><?php _e( 'GCM Sender ID', Notificare::PLUGIN_NAME ) ?></label>
                 <input name="applicationgcmsender" type="text" id="applicationgcmsender" value="<?php echo esc_html( get_option( 'notificare_gcmSender' ) ); ?>" class="regular-text" />
+            </div>
+            <h3><?php _e( 'Google Maps API Settings', Notificare::PLUGIN_NAME ) ?></h3>
+            <div class="field">
+                <label for="applicationgooglemapsapikey"><?php _e( 'Google Maps API Key', Notificare::PLUGIN_NAME ) ?></label>
+                <input name="applicationgooglemapsapikey" type="text" id="applicationgooglemapsapikey" value="<?php echo esc_html( get_option( 'notificare_googleMapsAPIKey' ) ); ?>" class="regular-text" />
             </div>
             <h3><?php _e( 'Geolocation Options', Notificare::PLUGIN_NAME ) ?></h3>
             <div class="field">

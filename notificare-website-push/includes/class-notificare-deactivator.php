@@ -41,6 +41,7 @@ class Notificare_Deactivator {
         delete_option( 'notificare_soundsDir' );
         delete_option( 'notificare_serviceWorker' );
         delete_option( 'notificare_serviceWorkerScope' );
+        delete_option( 'notificare_googleMapsAPIKey' );
         delete_option( 'notificare_geolocationOptionsTimeout' );
         delete_option( 'notificare_geolocationOptionsEnableHighAccuracy' );
         delete_option( 'notificare_geolocationOptionsMaximumAge' );

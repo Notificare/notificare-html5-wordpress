@@ -40,6 +40,7 @@ class Notificare_Activator {
 		add_option( 'notificare_soundsDir' );
 		add_option( 'notificare_serviceWorker' );
 		add_option( 'notificare_serviceWorkerScope' );
+		add_option( 'notificare_googleMapsAPIKey' );
 		add_option( 'notificare_geolocationOptionsTimeout' );
 		add_option( 'notificare_geolocationOptionsEnableHighAccuracy', '0' );
 		add_option( 'notificare_geolocationOptionsMaximumAge' );

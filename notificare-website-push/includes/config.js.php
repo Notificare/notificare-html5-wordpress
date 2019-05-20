@@ -9,6 +9,7 @@ $contents = array(
     "soundsDir" => $_GET['soundsDir'],
     "serviceWorker" => $_GET['serviceWorker'],
     "serviceWorkerScope" => $_GET['serviceWorkerScope'],
+    "googleMapsAPIKey" => $_GET['googleMapsAPIKey'],
     "geolocationOptions" => array(
         "timeout" => 0,
         "enableHighAccuracy" => false,

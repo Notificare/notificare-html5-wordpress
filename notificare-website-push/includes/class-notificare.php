@@ -85,7 +85,7 @@ class Notificare {
     public function __construct() {
 
         $this->plugin_name = self::PLUGIN_NAME;
-        $this->version = '1.0.0';
+        $this->version = '2.0.0';
 
         $this->load_dependencies();
         $this->set_locale();
@@ -94,8 +94,8 @@ class Notificare {
 
 
         add_action( 'admin_menu', array( $this, 'addOptionsPage') );
-        add_action('wp_head', array( $this, 'addRelManifest') );
-        add_action('wp_print_scripts', array( $this, 'addConfig') );
+        add_action( 'wp_head', array( $this, 'addRelManifest') );
+        add_action( 'wp_enqueue_scripts', array( $this, 'addConfig') );
 
     }
 
@@ -342,6 +342,10 @@ class Notificare {
                 update_option( 'notificare_serviceWorkerScope', $serviceWorkerScope );
             }
 
+            if ( isset( $_REQUEST['applicationgooglemapsapikey'] ) && is_numeric( $_REQUEST['applicationgooglemapsapikey'] ) ) {
+                update_option( 'notificare_googleMapsAPIKey', $_REQUEST['applicationgooglemapsapikey'] );
+            }
+
             if ( isset( $_REQUEST['applicationgeolocationtimeout'] ) && is_numeric( $_REQUEST['applicationgeolocationtimeout'] ) ) {
                 update_option( 'notificare_geolocationOptionsTimeout', $_REQUEST['applicationgeolocationtimeout'] );
             }
@@ -369,42 +373,42 @@ class Notificare {
     }
 
     public function addRelManifest() {
-        if ( get_option('notificare_overrideManifest') ) {
+        if ( get_option( 'notificare_overrideManifest' ) ) {
             echo '<link rel="manifest" href="' . plugin_dir_url( __FILE__ ) . 'manifest.json.php?gcmSender=' . rawurlencode(get_option('notificare_gcmSender')) . '&amp;app=' . rawurlencode(get_option('notificare_applicationName')) . '" />';
         }
     }
 
     public function addConfig() {
-        if (get_option('notificare_serviceWorker')) {
-            echo '<script type="text/javascript" src="' . plugin_dir_url( __FILE__ ) .
+        if ( get_option( 'notificare_serviceWorker' ) ) {
+            wp_enqueue_script( 'notificare-config', plugin_dir_url( __FILE__ ) .
                 'config.js.php?app=' . rawurlencode(get_option('notificare_applicationName')) .
-                '&amp;appHost=' . rawurlencode(get_option('notificare_applicationHost')) .
-                '&amp;appVersion=' . rawurlencode(get_option('notificare_applicationVersion')) .
-                '&amp;appKey=' . rawurlencode(get_option('notificare_applicationKey')) .
-                '&amp;appSecret=' . rawurlencode(get_option('notificare_applicationSecret')) .
-                '&amp;allowSilent=' . rawurlencode(get_option('notificare_allowSilent')) .
-                '&amp;soundsDir=' . rawurlencode(get_option('notificare_soundsDir')) .
-                '&amp;serviceWorker=' . rawurlencode(get_option('notificare_serviceWorker')) .
-                '&amp;serviceWorkerScope=' . rawurlencode(get_option('notificare_serviceWorkerScope')) .
+                '&appHost=' . rawurlencode(get_option('notificare_applicationHost')) .
+                '&appVersion=' . rawurlencode(get_option('notificare_applicationVersion')) .
+                '&appKey=' . rawurlencode(get_option('notificare_applicationKey')) .
+                '&appSecret=' . rawurlencode(get_option('notificare_applicationSecret')) .
+                '&allowSilent=' . rawurlencode(get_option('notificare_allowSilent')) .
+                '&soundsDir=' . rawurlencode(get_option('notificare_soundsDir')) .
+                '&serviceWorker=' . rawurlencode(get_option('notificare_serviceWorker')) .
+                '&serviceWorkerScope=' . rawurlencode(get_option('notificare_serviceWorkerScope')) .
+                '&googleMapsAPIKey=' . rawurlencode(get_option('notificare_googleMapsAPIKey')) .
                 '&amp;timeout=' . get_option('notificare_geolocationOptionsTimeout') .
                 '&amp;enableHighAccuracy=' . get_option('notificare_geolocationOptionsEnableHighAccuracy') .
-                '&amp;maximumAge=' . get_option('notificare_geolocationOptionsMaximumAge') .
-                '"></script>';
+                '&amp;maximumAge=' . get_option('notificare_geolocationOptionsMaximumAge'), array(), null, true);
         } else {
-            echo '<script type="text/javascript" src="' . plugin_dir_url( __FILE__ ) .
+            wp_enqueue_script('notificare-config', plugin_dir_url( __FILE__ ) .
                 'config.js.php?app=' . rawurlencode(get_option('notificare_applicationName')) .
-                '&amp;appHost=' . rawurlencode(get_option('notificare_applicationHost')) .
-                '&amp;appVersion=' . rawurlencode(get_option('notificare_applicationVersion')) .
-                '&amp;appKey=' . rawurlencode(get_option('notificare_applicationKey')) .
-                '&amp;appSecret=' . rawurlencode(get_option('notificare_applicationSecret')) .
-                '&amp;allowSilent=' . rawurlencode(get_option('notificare_allowSilent')) .
-                '&amp;soundsDir=' . rawurlencode(get_option('notificare_soundsDir')) .
-                '&amp;serviceWorker=' . rawurlencode(plugin_dir_url( __FILE__ ) . 'push-worker.js.php?serviceWorkerScope=' . rawurlencode(get_option('notificare_serviceWorkerScope'))) .
-                '&amp;serviceWorkerScope=' . rawurlencode(get_option('notificare_serviceWorkerScope')) .
-                '&amp;timeout=' . get_option('notificare_geolocationOptionsTimeout') .
-                '&amp;enableHighAccuracy=' . get_option('notificare_geolocationOptionsEnableHighAccuracy') .
-                '&amp;maximumAge=' . get_option('notificare_geolocationOptionsMaximumAge') .
-                '"></script>';
+                '&appHost=' . rawurlencode(get_option('notificare_applicationHost')) .
+                '&appVersion=' . rawurlencode(get_option('notificare_applicationVersion')) .
+                '&appKey=' . rawurlencode(get_option('notificare_applicationKey')) .
+                '&appSecret=' . rawurlencode(get_option('notificare_applicationSecret')) .
+                '&allowSilent=' . rawurlencode(get_option('notificare_allowSilent')) .
+                '&soundsDir=' . rawurlencode(get_option('notificare_soundsDir')) .
+                '&serviceWorker=' . rawurlencode(plugin_dir_url( __FILE__ ) . 'push-worker.js.php?serviceWorkerScope=' . rawurlencode(get_option('notificare_serviceWorkerScope'))) .
+                '&serviceWorkerScope=' . rawurlencode(get_option('notificare_serviceWorkerScope')) .
+                '&googleMapsAPIKey=' . rawurlencode(get_option('notificare_googleMapsAPIKey')) .
+                '&timeout=' . get_option('notificare_geolocationOptionsTimeout') .
+                '&enableHighAccuracy=' . get_option('notificare_geolocationOptionsEnableHighAccuracy') .
+                '&maximumAge=' . get_option('notificare_geolocationOptionsMaximumAge'), array(), null, true);
         }
     }
 
